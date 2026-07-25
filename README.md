@@ -190,7 +190,6 @@ y_pred = np.exp(y_pred)
 
 our plus de lisibilité, j'ai découpé le code en plusieurs sections :
 
-- génération des domaines de définitions des données d entréee  
 - génération des données d'entrée 
 - choix de la méthode de résolution
 - test du modèle
