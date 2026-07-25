@@ -1,1 +1,192 @@
-# surrogate-poutre
+# création d'un surrogate
+
+Le surrogate est une technique utilisée pour approximer des simulations avec des outil qui necessite moins de puissances et temps de calculs.
+
+Ce dépôt est organisé en deux parties :
+- La Partie 1 qui est une appropriation du modéle sur un cas maîtrisé simple : la flexion d'une
+  poutre encastrée-libre, dans le cadre des petites perturbations.
+- La Partie 2 qui est la comparaison de notre méthode de résolution avec un surrogate de référence, le SMT ([lien](https://smt.readthedocs.io/en/latest/)).
+
+# Partie 1 appropriation du concept 
+
+Plus précisement au lieu d’exécuter des simulations complètes coûteuses pour chaque variation de l'ensemble de paramètres de notre probleme, un modèle de substitution est entraîné à l’aide d’un nombre limité de simulations ABAQUS.Ce modèle peut ensuite prédire rapidement les  déformations, contraintes, fleches etc... pour de nouvelles valeurs d’entrée.
+
+## le pb physique
+
+Poru s approprier le probleme on étudiera une poutre ( de base b et hauteur h) encastrée en x = 0, libre en x = L, soumise à une force dans le plan noté F, appliquée à son extrémité libre (meme exemple que le tuto 3dexpérience "AI/ML in Physics simulations: Introduction to Surrogate Modelling with a beginner level workflow".)
+
+<p align="center">
+  <img src="photos/poutre.png" width="300">
+  <br>
+  <em>Figure 1 — Poutre encastrée-libre de longueur L, section b × h, soumise à une force F en extrémité.</em>
+</p>
+
+### Hypothèses
+Pour notre modéle on respectara les hypothéses suivantes :
+- *Petites perturbations (HPP)*
+- *Poutre élancée* (L/h ≥ 10)
+- *hypothèse de Bernoulli*
+- *Matériau élastique linéaire* module d'Young E constant.
+
+L'équation de la déformée par Euler-Bernoulli donne : $ EI\,\frac{d^{2}y}{dx^{2}} = M(x) $, le moment fléchissant vaut : $ M(x) = Fx - FL $
+En intégrant deux fois avec $ C_{1,2} \in(\mathbb{R})$:
+$$ EI\,y(x) = \frac{F x^{3}}{6} - \frac{F L x^{2}}{2} + C_{1}x + C_{2} $$
+Les *conditions aux limites* à l'encastrement (déplacement et rotation nuls) :
+$$ \left\{\begin{array}{l} y(0) = 0 \\[4pt] \dfrac{dy}{dx}(0) = 0 \end{array}\right.
+\quad\Longrightarrow\quad C_{1} = C_{2} = 0 $$
+La flèche maximale, atteinte à l'extrémité libre x = L, vaut donc :
+$$ \delta = y(L) = \frac{F L^{3}}{3 E I} $$
+
+Sous les mêmes hypothèses, la contrainte de flexion est maximale dans la hauteur max de la poutre (y = h/2)  et à l'encastrement (x = 0), où le moment est maximal en valeur absolue.
+
+$$ \sigma_{max} = max(|\frac{M(x)\,(h/2)}{I}|) = \frac{F L\,(h/2)}{I}  \quad avec \quad I = \dfrac{b h^{3}}{12}$$
+
+## le modéle 
+
+### La génération des points pour entrainer le modéle
+
+En premier lieu, il est nécessaire de fournir des données pour entraîner le modèle. En pratique, ce sont les résultats de simulations Abaqus de différentes configurations (les dimensions, dans notre cas) du système que l'on veut lui faire apprendre, mais aussi vérifier la fiabilité du modèle.
+
+Pour résoudre notre problème, on a besoin de ces cinq paramètres qui définiront la poutre : (L, b, h, F, E). Le surrogate apprend la relation entre ceux-ci et (δ, σ_max), qui sont quant à elles inconnues. Les bornes des valeurs d'entrée sont choisies de telle sorte que les poutres générées respectent les hypothèses de notre modèle, définies précédemment.
+
+Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisira une méthode d'échantillonnage parmi ces trois.
+
+- **Le full-factorial sampling** utilisé pour des résolutions d'équations en discrétisant. Il consiste à balayer toute une zone de manière régulière. Il n'est pas adapté à notre cas, car chaque point coûte cher et cela reviendrait à traiter le problème entièrement sous Abaqus.
+
+<p align="center">
+  <img src="photos/fullfactomoi.png" width="300">
+  <br>
+  <em>Figure 2 — Illustration de la méthode full-factorial sampling</em>
+</p>
+
+- **Le random sampling**, utile pour des problèmes où le jeu de données initial est grand et coûte peu (les PINN, par exemple). Dans notre cas, il n'y a pas assez de points, donc il ne recouvre pas tout le domaine, comme illustré ci-dessous.
+
+<p align="center">
+  <img src="photos/random_moi.png" width="400">
+  <br>
+  <em>Figure 3 — Illustration de la méthode random sampling</em>
+</p>
+
+- **Le Latin Hypercube Sampling (LHS)**, que l'on retiendra, car il conserve une part d'aléatoire tout en tirant un jeu de points inhérent aux poutres, sans pour autant couvrir tout l'espace. Il y arrive en quadrillant l'espace et en y attribuant minimum 1 point. 
+
+<p align="center">
+  <img src="photos/LHSmoi.png" width="400">
+  <br>
+  <em>Figure 4 — Illustration de la méthode Latin Hypercube Sampling</em>
+</p>
+
+La différence entre le random sampling et le LHS est encore plus flagrante sur mespropres données, avec b (base de la poutre) et L (longueur de celle-ci) :
+
+<p align="center">
+  <img src="photos/comparaison.png" width="400">
+  <br>
+  <em>Figure 5 — Comparaison random sampling / LHS sur le plan (L, b)</em>
+</p>
+
+Plus précisément, le tirage est codé de la manière suivante :
+
+```python
+X1 = qmc.LatinHypercube(d, seed).random(n)
+X2 = qmc.scale(X1, borne_inf, borne_sup)
+```
+avec **X1** : un tableau de taille (n, d) de points tirés dans [0, 1] par la méthode LHS ;
+et **X2**  : un tableau de même taille, mis à l'échelle entre les bornes inférieure et supérieure renseignées.
+
+Ces points serviront ensuite à alimenter un fichier CSV utilisé en entrée d'Abaqus.
+
+### Le choix des métriques
+
+Pour savoir si les modèles sont satisfaisants, je choisis un $R^2$ plutôt qu'une MSE, afin de pouvoir comparer les erreurs des différentes sorties entre elles (la MSE dépend des unités des sorties et rend la comparaison entre les sorties difficiles pour savoir laquelle est mieux approximée ).
+
+$$R^{2} = 1 - \frac{\sum_{i}\left(y_i - \hat{y}_i\right)^{2}}{\sum_{i}\left(y_i - \bar{y}\right)^{2}}$$
+
+où $y_i$ est la sortie de référence, $\hat{y}_i$ la sortie du surrogate et $\bar{y}$ la
+moyenne des valeurs de référence.
+
+De plus, j'utilise l'erreur relative médiane, car le projet PINN a montré que deux modèles peuvent avoir la même moyenne tout en se comportant différemment, l'un présentant une plus grande variance dans ses sorties. De plus elle est adimensionnée et permet de prendre en compte l'influence des grandes comme des petites valeurs en divisant par leurs valeurs.
+
+$$E_{\text{rel}} = \underset{i}{\mathrm{med}} \left( \frac{\left| \hat{y}_i - y_i \right|}{\left| y_i \right|} \right) \times 100$$
+
+### La méthode d'apprentissage
+
+Pour le surrogate, il existe principalement trois méthodes d'apprentissage : la régression polynomiale, le krigeage et les MLP.
+
+J'écarte d'emblée les MLP car, comme vu dans le projet PINN, ils sont efficaces avec un grand jeu de données ce que le surrogate cherche justement à éviter car l'obtention de données est couteux. De plus, on perd de l'information du fait de leur nature de ' boîte noire ' à contrario du kriging qui appporte une variance sur tout le domaine de sorti.
+
+#### Le surrogate par régression polynomiale
+
+Il est réalisé avec la bibliothèque sklearn, plus simple à mettre en place. Compte tenu du fait que l'on produit un polynôme à plusieurs variables, il obtient de piètres résultats, même en normalisant les entrées. Une technique découverte consiste à appliquer la fonction log (toutes nos données sont positives tant qu'elles ne sont pas normalisées), de telle façon que les exposants soient appris plus facilement :
+
+$$\text{par exemple} \quad \delta = \frac{4\, P\, L^3}{E\, b\, h^3} \quad \text{donne en log :} \quad
+\log\delta = \log 4 + \log P + 3\log L - \log E - \log b - 3\log h$$
+
+On repasse ensuite par l'exponentielle pour retrouver la bonne expression.
+
+#### Le krigeage
+Il se présente comme une régression, mais qui quantifie la variance autour de chaque point. Elle se resserre près des points connus et s'élargit dans les zones peu explorées. De plus, cette variance peut servir à choisir le prochain point à simuler.
+
+<p align="center">
+  <img src="photos/illukrig.png" width="400">
+  <br>
+  <em>Figure 6 — Illustration de la méthode du krigeage</em>
+</p>
+
+La zone grise est calculée avec le kernel que l'on définira ensuite, et chaque prédiction possède son incertitude, ce qui est pratique pour savoir sur quels points le modèle est fiable.
+
+Le krigeage modélise la réponse comme la somme de deux termes (conventions de SMT) :
+
+$$\hat{y}(\mathbf{x}) = \underbrace{\sum_{i=1}^{k} \beta_i f_i(\mathbf{x})}_{\text{paramètres que l'on entraîne}} + \underbrace{Z(\mathbf{x})}_{\text{influence des points connus réglée par le noyau}}$$
+
+- le premier terme est constitué de coefficients $\beta_i$ réglés à l entrainement 
+  à l'entraînement ;
+- le second, $Z(\mathbf{x})$, permet aussi de relier les points à l'aide du noyau
+
+C'est le noyau qui porte à la fois la notion de proximité entre points et le niveau de bruit. J'utilise un noyau gaussien car la réponse que l'on approxime ne présente à priori pas de fortes variations. Dans ce code, chaque entrée possède son propre length-scale ( le $\ell$ ) dit ARD, ce qui permet d'identifier les paramètres les plus influents.
+
+On note $x$ le point que l'on veut prédire, $x'$ un point connu et $j$ l'indice des
+entrées :
+
+$$k(x, x') = \exp\left(-\sum_{j} \frac{(x_j - x'_j)^2}{2\,\ell_j^2}\right)$$
+
+Le paramètre $\ell_j$ règle la portée d'influence de la variable $j$.
+
+Je trouve plus simple à s approprier ce concept de cette maniere avec les sorties centrées le second terme vaut:
+
+
+$$Z(x) = \sum_{i=1}^{n} w_i(x)\,y_i
+\qquad \text{avec} \qquad w(x) = (K + \sigma^2 I)^{-1}\, k(x)$$
+
+$$\text{avec}$$
+$$k(x) = \begin{pmatrix} k(x, x_1') \\ k(x, x'_2) \\ \vdots \\ k(x, x'_n) \end{pmatrix}$$
+
+- un vecteur $k(x^*)$ un vecteur ou on calcul la similarité entre le point que l on traite et les autres via le kernel
+-  $(K + \sigma^2 I)^{-1}$ la matrice inhérente au kriging avec ($\sigma^2 I$ étant le terme de bruit)
+
+*Cela s appuie entre autre sur la ressource https://arxiv.org/pdf/1303.1788*
+
+En pratique, le krigeage est codé de la manière suivante :
+
+```python
+kernel = C(1.0) * RBF(length_scale=np.ones(3)) + WhiteKernel(1e-8, (1e-14, 1e-4))
+gp = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=2)
+gp.fit(X_normalise, np.log(Y))
+y_pred, sigma = gp.predict(X_test_normalise, return_std=True)
+y_pred = np.exp(y_pred)
+```
+
+- `C(1.0)` : variance de la focntion initialisée à 1 puis optimisée à l'entraînement
+- `RBF(length_scale=np.ones(3))` : le noyau ARD, un length-scale
+  par entrée (L, b, h) ;
+- `WhiteKernel(1e-8, (1e-14, 1e-4))` : le terme de bruit, avec `1e-8` la valeur initiale
+  et `(1e-14, 1e-4)` ses bornes d'optimisation
+- `n_restarts_optimizer=2` : relance l'optimisation depuis plusieurs points de départ pour éviter les optima locaux qui peuvent faire en sorte que le résultat soit aberrant.
+## construction du code
+
+our plus de lisibilité, j'ai découpé le code en plusieurs sections :
+
+- génération des domaines de définitions des données d entréee  
+- génération des données d'entrée 
+- choix de la méthode de résolution
+- test du modèle
+
+« Sur la poutre, le domaine de validité est connu analytiquement (L/h, δ/L, domaine élastique), ce qui permet de le borner a priori. Sur une structure industrielle complexe, ces bornes théoriques n'existent pas : la validité se contrôle alors a posteriori sur les grandeurs calculées (plasticité, convergence en maillage, amplitude des déformations) et via l'incertitude du métamodèle, qui signale lui-même ses zones de fiabilité. Le cas simple de la poutre sert de banc d'essai où la vérité analytique permet de valider une méthodologie transposable au cas complexe. »
