@@ -49,7 +49,7 @@ $$
 Les *conditions aux limites* à l'encastrement (déplacement et rotation nuls) :
 
 $$
-\left\{\begin{array}{l} y(0) = 0 \\[4pt] \dfrac{dy}{dx}(0) = 0 \end{array}\right.
+\begin{cases} y(0) = 0 \\ \dfrac{dy}{dx}(0) = 0 \end{cases}
 \quad\Longrightarrow\quad C_{1} = C_{2} = 0
 $$
 
