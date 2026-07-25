@@ -29,14 +29,20 @@ Pour notre modéle on respectara les hypothéses suivantes :
 - *Matériau élastique linéaire* module d'Young E constant.
 
 L'équation de la déformée par Euler-Bernoulli donne : $ EI\,\frac{d^{2}y}{dx^{2}} = M(x) $, le moment fléchissant vaut : $ M(x) = Fx - FL $
-En intégrant deux fois avec $ C_{1,2} \in(\mathbb{R})$:
-$$ EI\,y(x) = \frac{F x^{3}}{6} - \frac{F L x^{2}}{2} + C_{1}x + C_{2} $$
-Les *conditions aux limites* à l'encastrement (déplacement et rotation nuls) :
-$$ \left\{\begin{array}{l} y(0) = 0 \\[4pt] \dfrac{dy}{dx}(0) = 0 \end{array}\right.
-\quad\Longrightarrow\quad C_{1} = C_{2} = 0 $$
-La flèche maximale, atteinte à l'extrémité libre x = L, vaut donc :
-$$ \delta = y(L) = \frac{F L^{3}}{3 E I} $$
 
+En intégrant deux fois avec $C_{1,2} \in \mathbb{R}$ :
+$$
+EI\,y(x) = \frac{F x^{3}}{6} - \frac{F L x^{2}}{2} + C_{1}x + C_{2}
+$$
+Les *conditions aux limites* à l'encastrement (déplacement et rotation nuls) :
+$$
+\left\{\begin{array}{l} y(0) = 0 \\[4pt] \dfrac{dy}{dx}(0) = 0 \end{array}\right.
+\quad\Longrightarrow\quad C_{1} = C_{2} = 0
+$$
+La flèche maximale, atteinte à l'extrémité libre $x = L$, vaut donc :
+$$
+\delta = y(L) = \frac{F L^{3}}{3 E I}
+$$
 Sous les mêmes hypothèses, la contrainte de flexion est maximale dans la hauteur max de la poutre (y = h/2)  et à l'encastrement (x = 0), où le moment est maximal en valeur absolue.
 
 $$ \sigma_{max} = max(|\frac{M(x)\,(h/2)}{I}|) = \frac{F L\,(h/2)}{I}  \quad avec \quad I = \dfrac{b h^{3}}{12}$$
@@ -188,5 +194,3 @@ our plus de lisibilité, j'ai découpé le code en plusieurs sections :
 - génération des données d'entrée 
 - choix de la méthode de résolution
 - test du modèle
-
-« Sur la poutre, le domaine de validité est connu analytiquement (L/h, δ/L, domaine élastique), ce qui permet de le borner a priori. Sur une structure industrielle complexe, ces bornes théoriques n'existent pas : la validité se contrôle alors a posteriori sur les grandeurs calculées (plasticité, convergence en maillage, amplitude des déformations) et via l'incertitude du métamodèle, qui signale lui-même ses zones de fiabilité. Le cas simple de la poutre sert de banc d'essai où la vérité analytique permet de valider une méthodologie transposable au cas complexe. »
