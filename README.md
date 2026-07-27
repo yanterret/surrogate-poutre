@@ -63,6 +63,8 @@ Sous les mêmes hypothèses, la contrainte de flexion est maximale dans la haute
 
 $$ \sigma_{max} = max(|\frac{M(x)\,(h/2)}{I}|) = \frac{F L\,(h/2)}{I}  \quad avec \quad I = \dfrac{b h^{3}}{12}$$
 
+---
+
 ## le modéle 
 
 ### La génération des points pour entrainer le modéle
@@ -116,18 +118,33 @@ et **X2**  : un tableau de même taille, mis à l'échelle entre les bornes inf�
 
 Ces points serviront ensuite à alimenter un fichier CSV utilisé en entrée d'Abaqus.
 
+simulations abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments tétraédriques C3D20R.
+On remarquera que le max est bien poche du début de la poutre ce qui vérifie la théorie des poutres
+
+
+<p align="center">
+  <img src="photos/abaqus.png" width="600">
+  <br>
+  <em>Figure 6 illustration d'une simulation abaqus d'une poutre dans le domaine de notre probleme </em>
+</p>
+
+---
+
 ### Le choix des métriques
 
-Pour savoir si les modèles sont satisfaisants, je choisis un $R^2$ plutôt qu'une MSE, afin de pouvoir comparer les erreurs des différentes sorties entre elles (la MSE dépend des unités des sorties et rend la comparaison entre les sorties difficiles pour savoir laquelle est mieux approximée ).
+Pour savoir si les modèles sont satisfaisants, je choisis un $R^2$ plutôt qu'une MSE, afin de pouvoir comparer les erreurs des différentes sorties entre elles (la MSE dépend des unités des sorties et rend la comparaison entre les sorties difficiles pour savoir laquelle est mieux approximée ). Trouvé avec l'article [lien](https://www.sciencedirect.com/science/article/abs/pii/S1270963815000784).
 
 $$R^{2} = 1 - \frac{\sum_{i}\left(y_i - \hat{y}_i\right)^{2}}{\sum_{i}\left(y_i - \bar{y}\right)^{2}}$$
 
 où $y_i$ est la sortie de référence, $\hat{y}_i$ la sortie du surrogate et $\bar{y}$ la
 moyenne des valeurs de référence.
 
-De plus, j'utilise l'erreur relative médiane, car le projet PINN a montré que deux modèles peuvent avoir la même moyenne tout en se comportant différemment, l'un présentant une plus grande variance dans ses sorties. De plus elle est adimensionnée et permet de prendre en compte l'influence des grandes comme des petites valeurs en divisant par leurs valeurs.
+De plus, j'utilise l'erreur relative médiane (ERM), car le projet PINN a montré que deux modèles peuvent avoir la même moyenne tout en se comportant différemment, l'un présentant une plus grande variance dans ses sorties. De plus elle est adimensionnée et permet de prendre en compte l'influence des grandes comme des petites valeurs en divisant par leurs valeurs. En pratique elle mesure si le R2 est bon parceque les données sont toutes bonnes ou si ce sont de grands écarts qui se compensent ( pas voulu si on veut prédire une courbe en pratique)
 
 $$E_{\text{rel}} = \underset{i}{\mathrm{med}} \left( \frac{\left| \hat{y}_i - y_i \right|}{\left| y_i \right|} \right) \times 100$$
+
+
+--- 
 
 ### La méthode d'apprentissage
 
@@ -143,6 +160,21 @@ $$\text{par exemple} \quad \delta = \frac{4\, P\, L^3}{E\, b\, h^3} \quad \text{
 \log\delta = \log 4 + \log P + 3\log L - \log E - \log b - 3\log h$$
 
 On repasse ensuite par l'exponentielle pour retrouver la bonne expression.
+
+Ainsi, c'est avec les données normalisées que j'ai testé, avec plusieurs degrés de polynômes, les valeurs de prédiction des flèches et des contraintes maximales.
+Pour les couleurs et l'interprétation des données, j'ai décidé de me baser sur ce document ([justification R²](https://pmc.ncbi.nlm.nih.gov/articles/PMC12622781/) table 6) qui donne la valeur classique de résultat de surrogate (approximativement $R^2$ = 0.98) les valeurs en dessous de celle-ci et au-dessus de 0.8 sont médiocres (en gris) et celles en dessous de 0.8 extrêmement mauvaises (en rouge).
+Pour ce qui est de l'ERM, je n'ai trouvé nulle part d'utilisation de cette métrique dans le domaine (peut-être n'est-elle pas adaptée). Ainsi, je considère que le modèle est satisfaisant au niveau de l'ERM si elle est en dessous de 5 % et extrêmement mauvaise si elle est au-dessus de 20 %. Dans la réalité ces valeurs la sont fixés par le cahier des charges et ce que l on veut vraiment.
+
+| degré | 1 | *2* | 3 | 4 | 5 | 6 | 1 en entrée log |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| $R^2$ flèche | $\color{red}{0.73}$ | 0.93 | $\color{red}{0.55}$ | 0.87 | $\color{red}{0.78}$ | $\color{red}{0.13}$ | $\color{green}{0.99}$ |
+| ERM flèche | $\color{red}{41.6}$ % | $\color{red}{24.0}$ % | $\color{red}{27.3}$ % | $\color{red}{29.7}$ % | $\color{red}{36.4}$ % | $\color{red}{94.4}$ % | $\color{green}{0.17}$ % |
+| $R^2$ sigma max | 0.84 | 0.95 | 0.89 | 0.82 | $\color{red}{0.63}$ | $\color{red}{0.09}$ | $\color{green}{0.99}$ |
+| ERM sigma max | $\color{red}{21.0}$ % | 11.2 % | 5.1 % | 18.2 % | $\color{red}{21.9}$ % | $\color{red}{36.2}$ % | $\color{green}{0.62}$ % |
+
+On remarque que l'ERM est utile, par exemple pour la flèche de l'ordre 2 qui est passable avec un R² de 0.93 mais un ERM désastreux, ce qui signifie qu'en pratique ce modèle n'est pas fiable dans tout le domaine.
+Par ailleurs, on observe un surapprentissage aux ordres 6 avec les métriques qui ne sont pas satisfaisantes.
+Finalement, la sortie en log produit des résultats qui serait réellement utilisable pour un surrogate ( la raison est dans l explication plus haut), donc à tester si on connaît la relation de départ et qu'elle est multiplicative.
 
 #### Le krigeage
 Il se présente comme une régression, mais qui quantifie la variance autour de chaque point. Elle se resserre près des points connus et s'élargit dans les zones peu explorées. De plus, cette variance peut servir à choisir le prochain point à simuler.
@@ -184,24 +216,50 @@ $$k(x) = \begin{pmatrix} k(x, x_1') \\ k(x, x'_2) \\ \vdots \\ k(x, x'_n) \end{p
 - un vecteur $k(x^*)$ un vecteur ou on calcul la similarité entre le point que l on traite et les autres via le kernel
 -  $(K + \sigma^2 I)^{-1}$ la matrice inhérente au kriging avec ($\sigma^2 I$ étant le terme de bruit)
 
-*Cela s appuie entre autre sur la ressource https://arxiv.org/pdf/1303.1788*
+*Cela s appuie entre autre sur la ressource : [tuto kriging](https://mdobook.github.io/html/sbo/#sec-kriging)
 
 En pratique, le krigeage est codé de la manière suivante :
 
 ```python
-kernel = C(1.0) * RBF(length_scale=np.ones(3)) + WhiteKernel(1e-8, (1e-14, 1e-4))
-gp = GaussianProcessRegressor(kernel=kernel, normalize_y=True, n_restarts_optimizer=2)
+kernel = C(1.0) * RBF(length_scale=np.ones(3)) + WhiteKernel(1e-4, (1e-6, 1e-2))
+gp = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
 gp.fit(X_normalise, np.log(Y))
-y_pred, sigma = gp.predict(X_test_normalise, return_std=True)
-y_pred = np.exp(y_pred)
+Y_pred_gp = np.exp(gp.predict(Xtest_n))
+evaluer(Ytest, Y_pred_gp)
 ```
 
-- `C(1.0)` : variance de la focntion initialisée à 1 puis optimisée à l'entraînement
-- `RBF(length_scale=np.ones(3))` : le noyau ARD, un length-scale
-  par entrée (L, b, h) ;
-- `WhiteKernel(1e-8, (1e-14, 1e-4))` : le terme de bruit, avec `1e-8` la valeur initiale
-  et `(1e-14, 1e-4)` ses bornes d'optimisation
-- `n_restarts_optimizer=2` : relance l'optimisation depuis plusieurs points de départ pour éviter les optima locaux qui peuvent faire en sorte que le résultat soit aberrant.
+- C(1.0) : variance de la fonction initialisée à 1 puis optimisée à l'entraînement
+- RBF(length_scale=np.ones(3)) : le noyau ARD, un length-scale par entrée (L, b, h)
+- WhiteKernel(1e-4, (1e-6, 1e-2)) : le terme de bruit, avec 1e-4 la valeur initiale
+et (1e-6, 1e-2) ses bornes d'optimisation
+- normalize_y=True : obligatoire pour respecter l'hypothèse du modèle qui est d'avoir une moyenne nulle, donc il faut centrer Y pour respecter ça.
+Voici les résultats que j'ai avec des entrées normalisées et des sorties en log. En pratique, la valeur que j'ai vraiment tunée est le bruit, qui peut faire varier l'ERM de plusieurs pourcents.
+
+| sorties | $R^2$ | ERM |
+|:---:|:---:|:---:|
+| flèche | 0.998 | 1.86 % |
+| sigma max | 0.997 | 2.23 % |
+
+Sans les sorties en log, on a :
+
+| sorties | $R^2$ | ERM |
+|:---:|:---:|:---:|
+| flèche | 0.946 | $\color{red}{16.4}$ % |
+| sigma max | 0.964 | $\color{red}{9.2}$ % |
+
+Ainsi, on observe que le gain n'est pas tant sur le $R^2$ mais sur l'ERM, qui devient satisfaisante par rapport à des données qui n'ont pas subi le log. Cela peut s'expliquer par le fait que le log comprime les ordres de grandeur (par exemple l'utilisation du log pour les diagrammes de Bode) et car cela permet d'adimensionner l'erreur qui est une MSE et donc de prendre en compte toutes les erreurs malgré les tailles de poutres. Par exemple, pour une poutre de vraie flèche de 1 mm, se tromper de 2 mm n'a pas le même impact qu'une poutre de flèche réelle 60 qui se trompe de la même valeur. Plus explicitement :
+
+$$\text{MSE avec sortie log} = \frac{1}{n}\sum_{i=1}^{n}\big(\log \hat{y}_i - \log y_i\big)^2 = \frac{1}{n}\sum_{i=1}^{n}\Big(\log\big(\tfrac{\hat{y}_i}{y_i}\big)\Big)^2$$
+
+*Cela s'appuie entre autres sur la ressource : [tuto kriging](https://mdobook.github.io/html/sbo/#sec-kriging)*
+
+## L'utilisation
+
+Finalement, on peut utiliser ce modèle pour optimiser la géométrie de la poutre (b, h) pour résister à la charge sur laquelle on a entraîné le modèle.
+
+On utilise `differential_evolution` de scipy car c'est un algorithme de score pour savoir quelle poutre tester et a le meilleur score. Entre autres, masse la plus basse.
+
+*Cela s'appuie entre autres sur la ressource : [surrogate](https://computationaldesignlab.github.io/surrogate-methods/index.html)*
 ## construction du code
 
 our plus de lisibilité, j'ai découpé le code en plusieurs sections :
