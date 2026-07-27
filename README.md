@@ -267,3 +267,5 @@ Pour plus de lisibilité, j'ai découpé le code en plusieurs sections :
 - génération des données d'entrée
 - choix de la méthode de résolution
 - test du modèle
+
+bla
