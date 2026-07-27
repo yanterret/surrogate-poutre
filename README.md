@@ -1,19 +1,19 @@
 # création d'un surrogate
 
-Le surrogate est une technique utilisée pour approximer des simulations avec des outil qui necessite moins de puissances et temps de calculs.
+Le surrogate est une technique utilisée pour approximer des simulations avec des outils qui nécessitent moins de puissance et de temps de calcul.
 
 Ce dépôt est organisé en deux parties :
-- La Partie 1 qui est une appropriation du modéle sur un cas maîtrisé simple : la flexion d'une
+- La Partie 1 qui est une appropriation du modèle sur un cas maîtrisé simple : la flexion d'une
   poutre encastrée-libre, dans le cadre des petites perturbations.
 - La Partie 2 qui est la comparaison de notre méthode de résolution avec un surrogate de référence, le SMT ([lien](https://smt.readthedocs.io/en/latest/)).
 
-# Partie 1 appropriation du concept 
+# Partie 1 appropriation du concept
 
-Plus précisement au lieu d’exécuter des simulations complètes coûteuses pour chaque variation de l'ensemble de paramètres de notre probleme, un modèle de substitution est entraîné à l’aide d’un nombre limité de simulations ABAQUS.Ce modèle peut ensuite prédire rapidement les  déformations, contraintes, fleches etc... pour de nouvelles valeurs d’entrée.
+Plus précisément, au lieu d'exécuter des simulations complètes coûteuses pour chaque variation de l'ensemble de paramètres de notre problème, un modèle de substitution est entraîné à l'aide d'un nombre limité de simulations ABAQUS. Ce modèle peut ensuite prédire rapidement les déformations, contraintes, flèches etc... pour de nouvelles valeurs d'entrée.
 
 ## le pb physique
 
-Poru s approprier le probleme on étudiera une poutre ( de base b et hauteur h) encastrée en x = 0, libre en x = L, soumise à une force dans le plan noté F, appliquée à son extrémité libre (meme exemple que le tuto 3dexpérience "AI/ML in Physics simulations: Introduction to Surrogate Modelling with a beginner level workflow".)
+Pour s'approprier le problème, on étudiera une poutre (de base b et hauteur h) encastrée en x = 0, libre en x = L, soumise à une force dans le plan notée F, appliquée à son extrémité libre (même exemple que le tuto 3DEXPERIENCE "AI/ML in Physics simulations: Introduction to Surrogate Modelling with a beginner level workflow".)
 
 <p align="center">
   <img src="photos/poutre.png" width="300">
@@ -22,7 +22,7 @@ Poru s approprier le probleme on étudiera une poutre ( de base b et hauteur h) 
 </p>
 
 ### Hypothèses
-Pour notre modéle on respectara les hypothéses suivantes :
+Pour notre modèle, on respectera les hypothèses suivantes :
 - *Petites perturbations (HPP)*
 - *Poutre élancée* (L/h ≥ 10)
 - *hypothèse de Bernoulli*
@@ -65,9 +65,9 @@ $$ \sigma_{max} = max(|\frac{M(x)\,(h/2)}{I}|) = \frac{F L\,(h/2)}{I}  \quad ave
 
 ---
 
-## le modéle 
+## le modèle
 
-### La génération des points pour entrainer le modéle
+### La génération des points pour entraîner le modèle
 
 En premier lieu, il est nécessaire de fournir des données pour entraîner le modèle. En pratique, ce sont les résultats de simulations Abaqus de différentes configurations (les dimensions, dans notre cas) du système que l'on veut lui faire apprendre, mais aussi vérifier la fiabilité du modèle.
 
@@ -91,7 +91,7 @@ Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisir
   <em>Figure 3 — Illustration de la méthode random sampling</em>
 </p>
 
-- **Le Latin Hypercube Sampling (LHS)**, que l'on retiendra, car il conserve une part d'aléatoire tout en tirant un jeu de points inhérent aux poutres, sans pour autant couvrir tout l'espace. Il y arrive en quadrillant l'espace et en y attribuant minimum 1 point. 
+- **Le Latin Hypercube Sampling (LHS)**, que l'on retiendra, car il conserve une part d'aléatoire tout en tirant un jeu de points inhérent aux poutres, sans pour autant couvrir tout l'espace. Il y arrive en quadrillant l'espace et en y attribuant minimum 1 point.
 
 <p align="center">
   <img src="photos/LHSmoi.png" width="400">
@@ -99,7 +99,7 @@ Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisir
   <em>Figure 4 — Illustration de la méthode Latin Hypercube Sampling</em>
 </p>
 
-La différence entre le random sampling et le LHS est encore plus flagrante sur mespropres données, avec b (base de la poutre) et L (longueur de celle-ci) :
+La différence entre le random sampling et le LHS est encore plus flagrante sur mes propres données, avec b (base de la poutre) et L (longueur de celle-ci) :
 
 <p align="center">
   <img src="photos/comparaison.png" width="400">
@@ -118,39 +118,38 @@ et **X2**  : un tableau de même taille, mis à l'échelle entre les bornes inf�
 
 Ces points serviront ensuite à alimenter un fichier CSV utilisé en entrée d'Abaqus.
 
-simulations abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments tétraédriques C3D20R.
-On remarquera que le max est bien poche du début de la poutre ce qui vérifie la théorie des poutres
-
+Simulations Abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments tétraédriques C3D20R.
+On remarquera que le max est bien proche du début de la poutre, ce qui vérifie la théorie des poutres.
 
 <p align="center">
   <img src="photos/abaqus.png" width="600">
   <br>
-  <em>Figure 6 illustration d'une simulation abaqus d'une poutre dans le domaine de notre probleme </em>
+  <em>Figure 6 illustration d'une simulation Abaqus d'une poutre dans le domaine de notre problème</em>
 </p>
 
 ---
 
 ### Le choix des métriques
 
-Pour savoir si les modèles sont satisfaisants, je choisis un $R^2$ plutôt qu'une MSE, afin de pouvoir comparer les erreurs des différentes sorties entre elles (la MSE dépend des unités des sorties et rend la comparaison entre les sorties difficiles pour savoir laquelle est mieux approximée ). Trouvé avec l'article [lien](https://www.sciencedirect.com/science/article/abs/pii/S1270963815000784).
+Pour savoir si les modèles sont satisfaisants, je choisis un $R^2$ plutôt qu'une MSE, afin de pouvoir comparer les erreurs des différentes sorties entre elles (la MSE dépend des unités des sorties et rend la comparaison entre les sorties difficile pour savoir laquelle est mieux approximée). Trouvé avec l'article [lien](https://www.sciencedirect.com/science/article/abs/pii/S1270963815000784).
 
 $$R^{2} = 1 - \frac{\sum_{i}\left(y_i - \hat{y}_i\right)^{2}}{\sum_{i}\left(y_i - \bar{y}\right)^{2}}$$
 
 où $y_i$ est la sortie de référence, $\hat{y}_i$ la sortie du surrogate et $\bar{y}$ la
 moyenne des valeurs de référence.
 
-De plus, j'utilise l'erreur relative médiane (ERM), car le projet PINN a montré que deux modèles peuvent avoir la même moyenne tout en se comportant différemment, l'un présentant une plus grande variance dans ses sorties. De plus elle est adimensionnée et permet de prendre en compte l'influence des grandes comme des petites valeurs en divisant par leurs valeurs. En pratique elle mesure si le R2 est bon parceque les données sont toutes bonnes ou si ce sont de grands écarts qui se compensent ( pas voulu si on veut prédire une courbe en pratique)
+De plus, j'utilise l'erreur relative médiane (ERM), car le projet PINN a montré que deux modèles peuvent avoir la même moyenne tout en se comportant différemment, l'un présentant une plus grande variance dans ses sorties. De plus, elle est adimensionnée et permet de prendre en compte l'influence des grandes comme des petites valeurs en divisant par leurs valeurs. En pratique, elle mesure si le R² est bon parce que les données sont toutes bonnes ou si ce sont de grands écarts qui se compensent (pas voulu si on veut prédire une courbe en pratique).
 
 $$E_{\text{rel}} = \underset{i}{\mathrm{med}} \left( \frac{\left| \hat{y}_i - y_i \right|}{\left| y_i \right|} \right) \times 100$$
 
 
---- 
+---
 
 ### La méthode d'apprentissage
 
 Pour le surrogate, il existe principalement trois méthodes d'apprentissage : la régression polynomiale, le krigeage et les MLP.
 
-J'écarte d'emblée les MLP car, comme vu dans le projet PINN, ils sont efficaces avec un grand jeu de données ce que le surrogate cherche justement à éviter car l'obtention de données est couteux. De plus, on perd de l'information du fait de leur nature de ' boîte noire ' à contrario du kriging qui appporte une variance sur tout le domaine de sorti.
+J'écarte d'emblée les MLP car, comme vu dans le projet PINN, ils sont efficaces avec un grand jeu de données, ce que le surrogate cherche justement à éviter car l'obtention de données est coûteuse. De plus, on perd de l'information du fait de leur nature de ' boîte noire ', a contrario du kriging qui apporte une variance sur tout le domaine de sortie.
 
 #### Le surrogate par régression polynomiale
 
@@ -162,8 +161,8 @@ $$\text{par exemple} \quad \delta = \frac{4\, P\, L^3}{E\, b\, h^3} \quad \text{
 On repasse ensuite par l'exponentielle pour retrouver la bonne expression.
 
 Ainsi, c'est avec les données normalisées que j'ai testé, avec plusieurs degrés de polynômes, les valeurs de prédiction des flèches et des contraintes maximales.
-Pour les couleurs et l'interprétation des données, j'ai décidé de me baser sur ce document ([justification R²](https://pmc.ncbi.nlm.nih.gov/articles/PMC12622781/) table 6) qui donne la valeur classique de résultat de surrogate (approximativement $R^2$ = 0.98) les valeurs en dessous de celle-ci et au-dessus de 0.8 sont médiocres (en gris) et celles en dessous de 0.8 extrêmement mauvaises (en rouge).
-Pour ce qui est de l'ERM, je n'ai trouvé nulle part d'utilisation de cette métrique dans le domaine (peut-être n'est-elle pas adaptée). Ainsi, je considère que le modèle est satisfaisant au niveau de l'ERM si elle est en dessous de 5 % et extrêmement mauvaise si elle est au-dessus de 20 %. Dans la réalité ces valeurs la sont fixés par le cahier des charges et ce que l on veut vraiment.
+Pour les couleurs et l'interprétation des données, j'ai décidé de me baser sur ce document ([justification R²](https://pmc.ncbi.nlm.nih.gov/articles/PMC12622781/) table 6) qui donne la valeur classique de résultat de surrogate (approximativement $R^2$ = 0.98) ; les valeurs en dessous de celle-ci et au-dessus de 0.8 sont médiocres (en gris) et celles en dessous de 0.8 extrêmement mauvaises (en rouge).
+Pour ce qui est de l'ERM, je n'ai trouvé nulle part d'utilisation de cette métrique dans le domaine (peut-être n'est-elle pas adaptée). Ainsi, je considère que le modèle est satisfaisant au niveau de l'ERM si elle est en dessous de 5 % et extrêmement mauvaise si elle est au-dessus de 20 %. Dans la réalité, ces valeurs-là sont fixées par le cahier des charges et ce que l'on veut vraiment.
 
 | degré | 1 | *2* | 3 | 4 | 5 | 6 | 1 en entrée log |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -172,9 +171,9 @@ Pour ce qui est de l'ERM, je n'ai trouvé nulle part d'utilisation de cette mét
 | $R^2$ sigma max | 0.84 | 0.95 | 0.89 | 0.82 | $\color{red}{0.63}$ | $\color{red}{0.09}$ | $\color{green}{0.99}$ |
 | ERM sigma max | $\color{red}{21.0}$ % | 11.2 % | 5.1 % | 18.2 % | $\color{red}{21.9}$ % | $\color{red}{36.2}$ % | $\color{green}{0.62}$ % |
 
-On remarque que l'ERM est utile, par exemple pour la flèche de l'ordre 2 qui est passable avec un R² de 0.93 mais un ERM désastreux, ce qui signifie qu'en pratique ce modèle n'est pas fiable dans tout le domaine.
-Par ailleurs, on observe un surapprentissage aux ordres 6 avec les métriques qui ne sont pas satisfaisantes.
-Finalement, la sortie en log produit des résultats qui serait réellement utilisable pour un surrogate ( la raison est dans l explication plus haut), donc à tester si on connaît la relation de départ et qu'elle est multiplicative.
+On remarque que l'ERM est utile, par exemple pour la flèche de l'ordre 2 qui est passable avec un R² de 0.93 mais une ERM désastreuse, ce qui signifie qu'en pratique ce modèle n'est pas fiable dans tout le domaine.
+Par ailleurs, on observe un surapprentissage à l'ordre 6 avec les métriques qui ne sont pas satisfaisantes.
+Finalement, la sortie en log produit des résultats qui seraient réellement utilisables pour un surrogate (la raison est dans l'explication plus haut), donc à tester si on connaît la relation de départ et qu'elle est multiplicative.
 
 #### Le krigeage
 Il se présente comme une régression, mais qui quantifie la variance autour de chaque point. Elle se resserre près des points connus et s'élargit dans les zones peu explorées. De plus, cette variance peut servir à choisir le prochain point à simuler.
@@ -191,11 +190,10 @@ Le krigeage modélise la réponse comme la somme de deux termes (conventions de 
 
 $$\hat{y}(\mathbf{x}) = \underbrace{\sum_{i=1}^{k} \beta_i f_i(\mathbf{x})}_{\text{paramètres que l'on entraîne}} + \underbrace{Z(\mathbf{x})}_{\text{influence des points connus réglée par le noyau}}$$
 
-- le premier terme est constitué de coefficients $\beta_i$ réglés à l entrainement 
-  à l'entraînement ;
+- le premier terme est constitué de coefficients $\beta_i$ réglés à l'entraînement ;
 - le second, $Z(\mathbf{x})$, permet aussi de relier les points à l'aide du noyau
 
-C'est le noyau qui porte à la fois la notion de proximité entre points et le niveau de bruit. J'utilise un noyau gaussien car la réponse que l'on approxime ne présente à priori pas de fortes variations. Dans ce code, chaque entrée possède son propre length-scale ( le $\ell$ ) dit ARD, ce qui permet d'identifier les paramètres les plus influents.
+C'est le noyau qui porte à la fois la notion de proximité entre points et le niveau de bruit. J'utilise un noyau gaussien car la réponse que l'on approxime ne présente a priori pas de fortes variations. Dans ce code, chaque entrée possède son propre length-scale (le $\ell$) dit ARD, ce qui permet d'identifier les paramètres les plus influents.
 
 On note $x$ le point que l'on veut prédire, $x'$ un point connu et $j$ l'indice des
 entrées :
@@ -204,7 +202,7 @@ $$k(x, x') = \exp\left(-\sum_{j} \frac{(x_j - x'_j)^2}{2\,\ell_j^2}\right)$$
 
 Le paramètre $\ell_j$ règle la portée d'influence de la variable $j$.
 
-Je trouve plus simple à s approprier ce concept de cette maniere avec les sorties centrées le second terme vaut:
+Je trouve plus simple à s'approprier ce concept de cette manière : avec les sorties centrées, le second terme vaut :
 
 
 $$Z(x) = \sum_{i=1}^{n} w_i(x)\,y_i
@@ -213,10 +211,10 @@ $$Z(x) = \sum_{i=1}^{n} w_i(x)\,y_i
 $$\text{avec}$$
 $$k(x) = \begin{pmatrix} k(x, x_1') \\ k(x, x'_2) \\ \vdots \\ k(x, x'_n) \end{pmatrix}$$
 
-- un vecteur $k(x^*)$ un vecteur ou on calcul la similarité entre le point que l on traite et les autres via le kernel
+- un vecteur $k(x^*)$ un vecteur où on calcule la similarité entre le point que l'on traite et les autres via le kernel
 -  $(K + \sigma^2 I)^{-1}$ la matrice inhérente au kriging avec ($\sigma^2 I$ étant le terme de bruit)
 
-*Cela s appuie entre autre sur la ressource : [tuto kriging](https://mdobook.github.io/html/sbo/#sec-kriging)
+*Cela s'appuie entre autres sur la ressource : [tuto kriging](https://mdobook.github.io/html/sbo/#sec-kriging)*
 
 En pratique, le krigeage est codé de la manière suivante :
 
@@ -233,6 +231,7 @@ evaluer(Ytest, Y_pred_gp)
 - WhiteKernel(1e-4, (1e-6, 1e-2)) : le terme de bruit, avec 1e-4 la valeur initiale
 et (1e-6, 1e-2) ses bornes d'optimisation
 - normalize_y=True : obligatoire pour respecter l'hypothèse du modèle qui est d'avoir une moyenne nulle, donc il faut centrer Y pour respecter ça.
+
 Voici les résultats que j'ai avec des entrées normalisées et des sorties en log. En pratique, la valeur que j'ai vraiment tunée est le bruit, qui peut faire varier l'ERM de plusieurs pourcents.
 
 | sorties | $R^2$ | ERM |
@@ -260,10 +259,11 @@ Finalement, on peut utiliser ce modèle pour optimiser la géométrie de la pout
 On utilise `differential_evolution` de scipy car c'est un algorithme de score pour savoir quelle poutre tester et a le meilleur score. Entre autres, masse la plus basse.
 
 *Cela s'appuie entre autres sur la ressource : [surrogate](https://computationaldesignlab.github.io/surrogate-methods/index.html)*
+
 ## construction du code
 
-our plus de lisibilité, j'ai découpé le code en plusieurs sections :
+Pour plus de lisibilité, j'ai découpé le code en plusieurs sections :
 
-- génération des données d'entrée 
+- génération des données d'entrée
 - choix de la méthode de résolution
 - test du modèle
