@@ -208,8 +208,11 @@ Je trouve plus simple à s'approprier ce concept de cette manière : avec les so
 $$Z(x) = \sum_{i=1}^{n} w_i(x)\,y_i
 \qquad \text{avec} \qquad w(x) = (K + \sigma^2 I)^{-1}\, k(x)$$
 
-$$\text{avec}$$
-$$k(x) = \begin{pmatrix} k(x, x_1') \\ k(x, x'_2) \\ \vdots \\ k(x, x'_n) \end{pmatrix}$$
+avec 
+
+```math
+k(x) = \begin{pmatrix} k(x, x_1') \\ k(x, x_2') \\ \vdots \\ k(x, x_n') \end{pmatrix}
+```
 
 - un vecteur $k(x^*)$ un vecteur où on calcule la similarité entre le point que l'on traite et les autres via le kernel
 -  $(K + \sigma^2 I)^{-1}$ la matrice inhérente au kriging avec ($\sigma^2 I$ étant le terme de bruit)
