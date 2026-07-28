@@ -1,11 +1,30 @@
 # création d'un surrogate
 
-Le surrogate est une technique utilisée pour approximer des simulations avec des outils qui nécessitent moins de puissance et de temps de calcul.
+Le surrogate est une technique utilisée pour approximer des simulations avec des outils qui nécessitent moins de puissance et de temps de calcul. Dans notre cas il nous permettra d'optimiser la surface d'une poutre sous contrainte ce qui aurait pris plusieurs heures sur abaqus
 
 Ce dépôt est organisé en deux parties :
 - La Partie 1 qui est une appropriation du modèle sur un cas maîtrisé simple : la flexion d'une
   poutre encastrée-libre, dans le cadre des petites perturbations.
 - La Partie 2 qui est la comparaison de notre méthode de résolution avec un surrogate de référence, le SMT ([lien](https://smt.readthedocs.io/en/latest/)).
+
+## Résultats clés sur les méthodes de résolutions
+
+surrogate avec 3 entrées (b,h,L) variables 2 fixes F et E pour 2 sorties ( fixer E et F multiplie juste la relation de la fleche par une constante.): la fleche, la contrainte max avec 30 simulations abaqus pour entrainer le modéle et 20 de test. Ce modéle sert pour optimiser la section et trouver la poutre la plus légère en respectant sans relancer Abaqus.
+
+| configuration log| $R^2$ flèche | ERM flèche | $R^2$ sigma max | ERM sigma max |
+|:---:|:---:|:---:|:---:|:---:|
+| SMT tuné | 0.9986 | $\color{green}{1.37} $ % | 0.9974 | 2.32 % |
+| kriging maison tuné | 0.998 | 1.86 % | 0.997 | $\color{green}{2.23}$ % |
+
+- appliquer la fonction log aux sorties rends unanimement les modéles de kriging plus efficaces
+- mon kriging maison atteint un $R^2$ satisfaisant et compétitif par rapport au SMT et en terme d écart réel médiane (ERM) est similaire à 0.5% prés ce qui valide mon travail 
+
+<p align="center">
+  <img src="photos/resultat.png" width="600">
+  <br>
+  <em>Figure 1 résultat de mon code par rapport à la premiere bisectrice des axes ( ce que mon code est censé faire) </em>
+</p>
+
 
 # Partie 1 appropriation du concept
 
@@ -18,7 +37,7 @@ Pour s'approprier le problème, on étudiera une poutre (de base b et hauteur h)
 <p align="center">
   <img src="photos/poutre.png" width="300">
   <br>
-  <em>Figure 1 — Poutre encastrée-libre de longueur L, section b × h, soumise à une force F en extrémité.</em>
+  <em>Figure 2 Poutre encastrée libre de longueur L, section bh, soumise à une force F à l'extrémité.</em>
 </p>
 
 ### Hypothèses
@@ -80,7 +99,7 @@ Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisir
 <p align="center">
   <img src="photos/fullfactomoi.png" width="300">
   <br>
-  <em>Figure 2 — Illustration de la méthode full-factorial sampling</em>
+  <em>Figure 3 Illustration de la méthode full-factorial sampling</em>
 </p>
 
 - **Le random sampling**, utile pour des problèmes où le jeu de données initial est grand et coûte peu (les PINN, par exemple). Dans notre cas, il n'y a pas assez de points, donc il ne recouvre pas tout le domaine, comme illustré ci-dessous.
@@ -88,7 +107,7 @@ Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisir
 <p align="center">
   <img src="photos/random_moi.png" width="400">
   <br>
-  <em>Figure 3 — Illustration de la méthode random sampling</em>
+  <em>Figure 4Illustration de la méthode random sampling</em>
 </p>
 
 - **Le Latin Hypercube Sampling (LHS)**, que l'on retiendra, car il conserve une part d'aléatoire tout en tirant un jeu de points inhérent aux poutres, sans pour autant couvrir tout l'espace. Il y arrive en quadrillant l'espace et en y attribuant minimum 1 point.
@@ -96,7 +115,7 @@ Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisir
 <p align="center">
   <img src="photos/LHSmoi.png" width="400">
   <br>
-  <em>Figure 4 — Illustration de la méthode Latin Hypercube Sampling</em>
+  <em>Figure 5 Illustration de la méthode Latin Hypercube Sampling</em>
 </p>
 
 La différence entre le random sampling et le LHS est encore plus flagrante sur mes propres données, avec b (base de la poutre) et L (longueur de celle-ci) :
@@ -104,7 +123,7 @@ La différence entre le random sampling et le LHS est encore plus flagrante sur 
 <p align="center">
   <img src="photos/comparaison.png" width="400">
   <br>
-  <em>Figure 5 — Comparaison random sampling / LHS sur le plan (L, b)</em>
+  <em>Figure 6 Comparaison random sampling / LHS sur le plan (L, b)</em>
 </p>
 
 Plus précisément, le tirage est codé de la manière suivante :
@@ -118,13 +137,13 @@ et **X2**  : un tableau de même taille, mis à l'échelle entre les bornes inf�
 
 Ces points serviront ensuite à alimenter un fichier CSV utilisé en entrée d'Abaqus.
 
-Simulations Abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments tétraédriques C3D20R.
+Simulations Abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments hexaédrique C3D20R.
 On remarquera que le max est bien proche du début de la poutre, ce qui vérifie la théorie des poutres.
 
 <p align="center">
   <img src="photos/abaqus.png" width="600">
   <br>
-  <em>Figure 6 illustration d'une simulation Abaqus d'une poutre dans le domaine de notre problème</em>
+  <em>Figure 7 illustration d'une simulation Abaqus d'une poutre dans le domaine de notre problème</em>
 </p>
 
 ---
@@ -181,7 +200,7 @@ Il se présente comme une régression, mais qui quantifie la variance autour de 
 <p align="center">
   <img src="photos/illukrig.png" width="400">
   <br>
-  <em>Figure 6 — Illustration de la méthode du krigeage</em>
+  <em>Figure 8Illustration de la méthode du krigeage</em>
 </p>
 
 La zone grise est calculée avec le kernel que l'on définira ensuite, et chaque prédiction possède son incertitude, ce qui est pratique pour savoir sur quels points le modèle est fiable.
@@ -237,15 +256,11 @@ et (1e-6, 1e-2) ses bornes d'optimisation
 
 Voici les résultats que j'ai avec des entrées normalisées et des sorties en log. En pratique, la valeur que j'ai vraiment tunée est le bruit, qui peut faire varier l'ERM de plusieurs pourcents.
 
-| sorties | $R^2$ | ERM |
+| sorties avec log :| $R^2$ | ERM |
 |:---:|:---:|:---:|
-| flèche | 0.998 | 1.86 % |
-| sigma max | 0.997 | 2.23 % |
-
-Sans les sorties en log, on a :
-
-| sorties | $R^2$ | ERM |
-|:---:|:---:|:---:|
+| flèche | $\color{green}{0.998}$ | $\color{green}{1.86}$ % |
+| sigma max | $\color{green}{0.997}$ | $\color{green}{2.23}$ % |
+| **sorties sans log :**| $R^2$ | ERM |
 | flèche | 0.946 | $\color{red}{16.4}$ % |
 | sigma max | 0.964 | $\color{red}{9.2}$ % |
 
@@ -256,12 +271,52 @@ $$\text{MSE avec sortie log} = \frac{1}{n}\sum_{i=1}^{n}\big(\log \hat{y}_i - \l
 *Cela s'appuie entre autres sur la ressource : [tuto kriging](https://mdobook.github.io/html/sbo/#sec-kriging)*
 
 ## L'utilisation
-
 Finalement, on peut utiliser ce modèle pour optimiser la géométrie de la poutre (b, h) pour résister à la charge sur laquelle on a entraîné le modèle.
 
 On utilise `differential_evolution` de scipy car c'est un algorithme de score pour savoir quelle poutre tester et a le meilleur score. Entre autres, masse la plus basse.
 
+Finalement avec mon code j'obtiens `b = 23.8 mm, h = 100.0 mm, masse = 28.00 kg` et pour celui du smt `b = 26.1 mm, h = 100.0 mm, masse = 30.73 kg`
+
+On pourrait croire que le mien fonctionne mieux, mais non car si on fait les calculs de RDM ma poutre sort du domaine physique avec un delta de 5.40 mm. Tandis que le smt surdimensionne avec une flèche de 4.93 mm (les 2 modèles respectent le critère sur la contrainte maximum qui n'est apparemment pas le critère limitant dans mon problème).
+
+Ainsi il faut faire attention et prendre un coefficient de sécurité sur la flèche.
+- En prenant 90 % du critère à respecter j'obtiens : `27.5 mm, h = 100.0 mm, masse = 32.36 kg flèche de 4.675 mm` ce qui est maintenant bon
+- et 95 % : `b = 25.6 mm, h = 100.0 mm, masse = 30.18 kg flèche de 5.0223 mm` pas acceptable de très peu
+
+Cette erreur est sûrement due au fait que mon modèle ne prédit pas exactement le modèle qui respecte toutes les conditions physiques ($R^2$ pas égal à 1) et que le smt doit avoir une erreur plus basse pour cette valeur qui la surdimensionne.
+
+Ainsi en prenant en compte la variance que me renvoie mon modéle de krigeage je tombe sur `	b = 25.9 mm, h = 99.9 mm, masse = 30.46 kg fleche de 4.979 mm` ce qui est en dessous de la fleche de 5 mm, le surdimensionnement marche ! 
+
+
 *Cela s'appuie entre autres sur la ressource : [surrogate](https://computationaldesignlab.github.io/surrogate-methods/index.html)*
+
+## comparaison avec le smt 
+
+Il fonctionne de la meme maniere que le krigeage de scipy mais avec quelques spécificités, il se code de cette maniere:
+
+````python 
+smt = KRG(eval_noise=True, hyper_opt="Cobyla",theta0=[1e-2],theta_bounds = [1e-4,1e0])
+smt.set_training_values(Xtr_n, np.log(Ytr[:, j]))
+smt.train()
+y = np.exp(smt.predict_values(Xtest_n) )
+````
+
+- eval_noise=True : terme de bruit qui est analogue au white kernel, il s accompagne de l optimizer "Cobyla" pour que l algorythme converge mieux il est appelé par smt *nugget*
+- theta0=[1e-2],theta_bounds = [1e-4,1e0] : c est le noyau qui se regle avec un $\theta$ qui équivaut à l inverse de notre $\ell$ à un coefficient mutiplicatif prés
+
+Pour son utilisation soit on met le white kernel soit on tune nous meme le $\theta$ mais de mettre les 2 ensemble n est pas optimal. En sachant que si on tune le $\theta$, se sont ses bornes qui influent le plus sur le résultat.
+
+| configuration log| $R^2$ flèche | ERM flèche | $R^2$ σ max | ERM σ max |
+|:---|:---:|:---:|:---:|:---:|
+| configuration sans rien | $\color{green}{0.9987}$ | $\color{green}{1.68}$ % | $\color{green}{0.9970}$ | $\color{green}{2.13}$ % |
+| nugget | $\color{green}{0.9986}$ | $\color{green}{1.37}$ % | $\color{green}{0.9974}$ | $\color{green}{2.32}$ % |
+| theta réglé | $\color{green}{0.9986}$ | $\color{green}{1.37}$ % | $\color{green}{0.9967}$ | $\color{green}{2.37}$ % |
+| **configuration non log** | **$R^2$ flèche** | **ERM flèche** | **$R^2$ sigma max** | **ERM sigma max** |
+| configuration sans rien| 0.9533 | $\color{red}{15.77}$ % | 0.9777 | $\color{red}{8.06}$ % |
+| nugget | 0.9533 | $\color{red}{15.77}$ % | 0.9777 | $\color{red}{8.06}$ % |
+| theta réglé | 0.9455 | $\color{red}{17.90}$ % | 0.9686 | $\color{red}{8.56}$ % |
+
+Par cette comparaison on remarque que le tuning qui a le plus d importance est de passer les sorties en log et que un bon $\theta$ réglé équivaut au nugget. On remarquera que l ERM est cohérent car il est la seule métrique avec laquelle on peut comparer les tuning car les $R^2$ sont tous au niveau.
 
 ## construction du code
 
@@ -271,4 +326,12 @@ Pour plus de lisibilité, j'ai découpé le code en plusieurs sections :
 - choix de la méthode de résolution
 - test du modèle
 
-bla
+# Conclusion 
+
+finalement j ai réussi à m approprier le modéle surrogate/krigiage sur un exemple simple pour pouvoir comprendre pleinnement les difficultés de son utilisation. Entre autre les sorties log dont je ne connaissais pas l astuce ou encore le probleme de sous dimensionnement à la fin et l utilisation de l ERM dont je suis satisfait ne voyant cette métrique apparaitre nulle part. 
+
+Mes points d amélioration sont pour un projet surrogate:
+
+- de passer sur un probleme non linéaire cad me concentrer sur la résolution du probleme plutot que de l outil 
+- réussir à automatiser mes runs abaqus sous licence VMware protégée qui rend la chose complexe
+- tester d autres outils comme le Multi-Fidelity Neural Networks. Car je me suis rendu compte que j étais beaucoup plus à l aise sur ces outils( notamment grace à la connaissance des RNN ou PINN qui m ont donné les concepts necessaires pour aprehender plus facilement ces problemes)

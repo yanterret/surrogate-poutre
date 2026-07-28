@@ -1,0 +1,59 @@
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
+
+import numpy as np 
+
+def r2(y_vrai, y_pred):
+    ss_res = np.sum((y_vrai - y_pred)**2)
+    ss_tot = np.sum((y_vrai - y_vrai.mean())**2)
+    return 1 - ss_res/ss_tot
+
+def evaluer(Y_vrai, Y_pred):
+    res = {}
+    for j, s in enumerate(SORTIES):
+        r_2 = r2(Y_vrai[:, j], Y_pred[:, j])
+        err = np.median(np.abs(Y_pred[:, j] - Y_vrai[:, j]) / np.abs(Y_vrai[:, j])) * 100
+        res[s] = (r_2, err)
+        print(f'{s} R² = {r_2}, ERM = {err} %')
+
+SORTIES = ['delta', 'sigma']
+
+for deg in [1, 2, 3, 4,5,6]:
+    poly = make_pipeline(PolynomialFeatures(deg), LinearRegression())
+    poly.fit(Xtr_n, Ytr)
+    evaluer(Ytest, poly.predict(Xtest_n))
+    print(deg)
+    
+poly_log = make_pipeline(PolynomialFeatures(1), LinearRegression())
+poly_log.fit(np.log(Xtr), np.log(Ytr))
+Y_pred_log = np.exp(poly_log.predict(np.log(Xtest)))
+
+evaluer(Ytest, Y_pred_log)
+
+#kriging 
+
+kernel = C(1) * RBF(length_scale=np.ones(3)) + WhiteKernel(1e-4, (1e-6, 1e-2))
+gp = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+gp.fit(Xtr_n, np.log(Ytr))
+
+Y_pred_gp = np.exp(gp.predict(Xtest_n)) # array (30, 2)
+
+evaluer(Ytest, Y_pred_gp)
+
+#smt
+from smt.surrogate_models import KRG
+
+Yp = np.zeros_like(Ytest)
+
+for j, s in enumerate(SORTIES):
+    sm = KRG(print_global=False,theta0=[1e-2],theta_bounds = [1e-4,1e0])
+    sm.set_training_values(Xtr_n, np.log(Ytr[:, j]))
+    sm.train()
+    y =np.exp( sm.predict_values(Xtest_n)) # array (20, 1)
+    Yp[:, j] = y.reshape((1,-1))
+    
+evaluer(Ytest, Yp)
