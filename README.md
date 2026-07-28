@@ -328,10 +328,10 @@ Pour plus de lisibilité, j'ai découpé le code en plusieurs sections :
 
 # Conclusion 
 
-finalement j ai réussi à m approprier le modéle surrogate/krigiage sur un exemple simple pour pouvoir comprendre pleinnement les difficultés de son utilisation. Entre autre les sorties log dont je ne connaissais pas l astuce ou encore le probleme de sous dimensionnement à la fin et l utilisation de l ERM dont je suis satisfait ne voyant cette métrique apparaitre nulle part. 
+Finalement, j'ai réussi à m'approprier le modèle surrogate/krigeage sur un exemple simple pour pouvoir comprendre pleinement les difficultés de son utilisation. Entre autres, les sorties log dont je ne connaissais pas l'astuce, ou encore le problème de sous-dimensionnement à la fin et l'utilisation de l'ERM dont je suis satisfait ne voyant cette métrique apparaître nulle part.
 
-Mes points d amélioration sont pour un projet surrogate:
+Mes points d'amélioration sont, pour un projet surrogate :
 
-- de passer sur un probleme non linéaire cad me concentrer sur la résolution du probleme plutot que de l outil 
-- réussir à automatiser mes runs abaqus sous licence VMware protégée qui rend la chose complexe
-- tester d autres outils comme le Multi-Fidelity Neural Networks. Car je me suis rendu compte que j étais beaucoup plus à l aise sur ces outils( notamment grace à la connaissance des RNN ou PINN qui m ont donné les concepts necessaires pour aprehender plus facilement ces problemes)
+* de passer sur un problème non linéaire, c'est-à-dire me concentrer sur la résolution du problème plutôt que de l'outil
+* réussir à automatiser mes runs Abaqus sous licence VMware protégée qui rend la chose complexe
+* tester d'autres outils comme le Multi-Fidelity Neural Networks. Car je me suis rendu compte que j'étais beaucoup plus à l'aise sur ces outils (notamment grâce à la connaissance des RNN ou PINN qui m'ont donné les concepts nécessaires pour appréhender plus facilement ces problèmes)
