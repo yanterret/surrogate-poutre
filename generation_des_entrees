@@ -9,7 +9,6 @@ NOMS = ['L', 'b', 'h', 'P', 'E']
 bornes_inf = np.array([1000.0, 20.0, 20.0])
 bornes_supp = np.array([2000.0, 100.0, 100.0])
 
-# on genere les points que l on va simuler
 def generer_doe(n, seed):
     PE = np.hstack((np.full(n,2000).reshape(-1, 1),np.full(n,210000).reshape(-1, 1)))
     X_inter = np.empty((0, 3))
@@ -34,7 +33,6 @@ def generer_doe(n, seed):
 X_train = generer_doe(80, 0)  # seeds pairs pour éviter la superposition avec les seed test
 X_test  = generer_doe(20, 1) # seed impaires
 
-# on en creer un csv pour le fichier abaqus
 def exporter_doe(X, chemin):
     with open(chemin, mode='w', encoding='utf8') as F:
         F.write('id;L;b;h;P;E' + '\n')
@@ -47,7 +45,6 @@ def exporter_doe(X, chemin):
 exporter_doe(X_train, 'doe_train3.csv')
 exporter_doe(X_test, 'doe_test3.csv')   # données avant delta et sigma max donné par abaqus
 
-# à la fin des simulations on retransforme en array 
 def csv_to_array(doc):
     
     df = pd.read_csv(doc, sep=';', encoding='utf-8')
@@ -69,5 +66,5 @@ def csv_to_array(doc):
 Ytr, Xtr = csv_to_array('doe_test3_complet.csv')
 Ytest, Xtest = csv_to_array('doe_train30_bon.csv')
 
-sx = StandardScaler().fit(Xtr) # on fit ( moyenne écart type) sur le train car il y a des hypotheses dans le modéle sur la moyenne de Y 
+sx = StandardScaler().fit(Xtr)
 Xtr_n, Xtest_n = sx.transform(Xtr), sx.transform(Xtest) # création d un set normalisé meilleur pour le fit polynomiale

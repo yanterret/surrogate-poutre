@@ -2,6 +2,8 @@
 import numpy as np 
 from scipy.optimize import differential_evolution
 
+# code surrogate de base 
+
 DELTA_MAX = 5.0      # mm on le pose pour satisfaire la rdm
 SIGMA_MAX = 200.0    # MPa donné par la rdm
 L0 = 1500.0          # mm entre 1000 et 2000 ok

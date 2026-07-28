@@ -7,6 +7,8 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 
 import numpy as np 
 
+# création des métriques
+
 def r2(y_vrai, y_pred):
     ss_res = np.sum((y_vrai - y_pred)**2)
     ss_tot = np.sum((y_vrai - y_vrai.mean())**2)
@@ -21,6 +23,8 @@ def evaluer(Y_vrai, Y_pred):
         print(f'{s} R² = {r_2}, ERM = {err} %')
 
 SORTIES = ['delta', 'sigma']
+
+# résolution par polynomes
 
 for deg in [1, 2, 3, 4,5,6]:
     poly = make_pipeline(PolynomialFeatures(deg), LinearRegression())
@@ -45,6 +49,7 @@ Y_pred_gp = np.exp(gp.predict(Xtest_n)) # array (30, 2)
 evaluer(Ytest, Y_pred_gp)
 
 #smt
+
 from smt.surrogate_models import KRG
 
 Yp = np.zeros_like(Ytest)
@@ -55,5 +60,5 @@ for j, s in enumerate(SORTIES):
     sm.train()
     y =np.exp( sm.predict_values(Xtest_n)) # array (20, 1)
     Yp[:, j] = y.reshape((1,-1))
-    
+
 evaluer(Ytest, Yp)
