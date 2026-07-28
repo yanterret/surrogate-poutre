@@ -13,7 +13,7 @@ surrogate avec 3 entrées (b,h,L) variables 2 fixes F et E pour 2 sorties ( fixe
 
 | configuration log| $R^2$ flèche | ERM flèche | $R^2$ sigma max | ERM sigma max |
 |:---:|:---:|:---:|:---:|:---:|
-| SMT tuné | 0.9986 | $\color{green}{1.37} $ % | 0.9974 | 2.32 % |
+| SMT tuné | 0.9986 | $\color{green}{1.37}$ % | 0.9974 | 2.32 % |
 | kriging maison tuné | 0.998 | 1.86 % | 0.997 | $\color{green}{2.23}$ % |
 
 - appliquer la fonction log aux sorties rends unanimement les modéles de kriging plus efficaces
