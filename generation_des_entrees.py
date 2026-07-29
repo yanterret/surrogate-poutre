@@ -16,7 +16,7 @@ def generer_doe(n, seed):
     nb = n
     seed_bis = seed  # on change la seed car si dans la boucle on demande le meme nombre de points ça renverra la meme chose donc si ne marchent pas ne changerontr rien 
     while np.shape(X_inter)[0] < n :
-        X_append =  qmc.scale(qmc.LatinHypercube(d=3, seed=seed_bis).random(nb), bornes_inf, bornes_supp)
+        X_append =  qmc.scale(qmc.LatinHypercube(d=3, seed=seed_bis).random(nb), LO, HI)
         L, b, h = X_append[:,0], X_append[:,1],X_append[:,2]
         P = 2000
         E = 210000
@@ -31,17 +31,16 @@ def generer_doe(n, seed):
     return np.hstack((X_inter,PE))[:n]  # shape(n,5)
 
 # attention aux seeds
-X_train = generer_doe(80, 0)  # seeds pairs pour éviter la superposition avec les seed test
+X_train = generer_doe(30, 0)  # seeds pairs pour éviter la superposition avec les seed test
 X_test  = generer_doe(20, 1) # seed impaires
 
-# on en creer un csv pour le fichier abaqus
 def exporter_doe(X, chemin):
     with open(chemin, mode='w', encoding='utf8') as F:
         F.write('id;L;b;h;P;E' + '\n')
         for i, x in enumerate(X):
             ligne = f"{i:03d}" # pour respecter le format abaqus...
             for v in x:
-                ligne += ';' + f"{v:.4f}" # de meme....
+                ligne += ';' + f"{v:.4f}" # de meme
             F.write(ligne + '\n')
 
 exporter_doe(X_train, 'doe_train3.csv')
@@ -66,8 +65,8 @@ def csv_to_array(doc):
 
 # création des données de testà partir de simulations abaqus
 
-Ytr, Xtr = csv_to_array('doe_test3_complet.csv')
-Ytest, Xtest = csv_to_array('doe_train30_bon.csv')
+Ytest, Xtest  = csv_to_array('doe_test3_complet.csv')
+Ytr, Xtr = csv_to_array('doe_train30_bon.csv')
 
 sx = StandardScaler().fit(Xtr) # on fit ( moyenne écart type) sur le train car il y a des hypotheses dans le modéle sur la moyenne de Y 
 Xtr_n, Xtest_n = sx.transform(Xtr), sx.transform(Xtest) # création d un set normalisé meilleur pour le fit polynomiale
