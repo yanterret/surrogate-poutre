@@ -16,7 +16,7 @@ def generer_doe(n, seed):
     nb = n
     seed_bis = seed  # on change la seed car si dans la boucle on demande le meme nombre de points ça renverra la meme chose donc si ne marchent pas ne changerontr rien 
     while np.shape(X_inter)[0] < n :
-        X_append =  qmc.scale(qmc.LatinHypercube(d=3, seed=seed_bis).random(nb), LO, HI)
+        X_append =  qmc.scale(qmc.LatinHypercube(d=3, seed=seed_bis).random(nb), bornes_inf, bornes_supp)
         L, b, h = X_append[:,0], X_append[:,1],X_append[:,2]
         P = 2000
         E = 210000
