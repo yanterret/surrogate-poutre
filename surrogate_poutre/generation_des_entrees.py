@@ -101,18 +101,20 @@ def r2(y_vrai, y_pred):
     ss_tot = np.sum((y_vrai - y_vrai.mean())**2)
     return 1 - ss_res/ss_tot
 
-def evaluer(Y_vrai, Y_pred):
+def evaluer(Y_vrai, Y_pred, nom=''):
     '''
-    entrée : 
-    y_vrai, y_pred : float ou array 
-
+    entrée :
+    y_vrai, y_pred : float ou array
+    nom : string : nom de la méthode testée, pour la console et le csv
+ 
     sortie :
     métriques : string final
+    res : dict {sortie : (R2, ERM)} pour écrire le csv des résultats
     '''
     res = {}
     for j, s in enumerate(SORTIES):
         r_2 = r2(Y_vrai[:, j], Y_pred[:, j])
         err = np.median(np.abs(Y_pred[:, j] - Y_vrai[:, j]) / np.abs(Y_vrai[:, j])) * 100
         res[s] = (r_2, err)
-        print(f'{s} R² = {r_2}, ERM = {err} %')
+        print(f'{nom} {s} R² = {r_2}, ERM = {err} %')
     return res
