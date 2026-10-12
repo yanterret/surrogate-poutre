@@ -1,0 +1,10 @@
+# liste des versions de bibliothéques pythons recommandées pour tester le code 
+
+numpy==2.4.6
+scipy==1.17.1
+smt==2.14.1
+scikit-learn==1.9.0
+pandas ==3.0.5
+
+
+

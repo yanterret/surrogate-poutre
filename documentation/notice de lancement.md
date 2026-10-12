@@ -1,0 +1,17 @@
+## Lancer le code
+
+Prérequis : Python supérieur à 3.10.
+
+```bash
+git clone https://github.com/yanterret/surrogate-poutre.git
+cd surrogate-poutre
+pip install -r documentation/requirement.txt
+
+cd surrogate_poutre
+python generation_des_entrees.py    # traitement et générations des données
+python methodes_resolutions.py      # méthodes polynomiales et krigeage
+python surrogate_pipeline.py        # pipeline de test 
+python surrogate_methodes.py        # implémentations de surrogates
+```
+
+Les résultats sont écrits au format CSV dans `PINN_heat_equation_1D/resultats/`.
