@@ -84,3 +84,35 @@ def csv_to_array(doc):
     
     return Y,X
 
+#################
+# métriques
+#################
+SORTIES = ['delta', 'sigma']
+
+def r2(y_vrai, y_pred):
+    '''
+    entrée : 
+    y_vrai, y_pred : float ou array 
+
+    sortie :
+    R2 : float
+    '''
+    ss_res = np.sum((y_vrai - y_pred)**2)
+    ss_tot = np.sum((y_vrai - y_vrai.mean())**2)
+    return 1 - ss_res/ss_tot
+
+def evaluer(Y_vrai, Y_pred):
+    '''
+    entrée : 
+    y_vrai, y_pred : float ou array 
+
+    sortie :
+    métriques : string final
+    '''
+    res = {}
+    for j, s in enumerate(SORTIES):
+        r_2 = r2(Y_vrai[:, j], Y_pred[:, j])
+        err = np.median(np.abs(Y_pred[:, j] - Y_vrai[:, j]) / np.abs(Y_vrai[:, j])) * 100
+        res[s] = (r_2, err)
+        print(f'{s} R² = {r_2}, ERM = {err} %')
+    return res
