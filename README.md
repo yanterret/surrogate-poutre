@@ -20,7 +20,7 @@ Surrogate avec 3 entrées (b,h,L) variables 2 fixes F la force appliquée et E l
 - mon kriging maison atteint un $R^2$ inférieur au SMT sur la flèche mais supérieur sur la contrainte. Cependant en terme d'écart réel médian (ERM) **mon kriging maison peut donner des résultats 2 fois plus fiables que le SMT pour la flèche**. La variation sur le $R^2$ peut s'expliquer par quelques points qui sont très loin du résultat attendu mais globalement (ERM) mon modèle donne des résultats plus proches de la valeur attendue.
 
 <p align="center">
-  <img src="photos/resultat.png" width="600">
+  <img src="photos/resultat_2.png" width="600">
   <br>
   <em>Figure 1 résultat de mon code par rapport à la première bisectrice des axes ( ce que mon code est censé faire) </em>
 </p>
