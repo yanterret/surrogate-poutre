@@ -70,14 +70,14 @@ for s in SORTIES:
     RESULTATS.append(('poly_log', s, r_2, err))
 
 # par krigegage
-Y_pred_gp, gp = resol_kriging(Xtr_n, Ytr, Xtest_n)   # gp resert pour l optimisation
+Y_pred_gp, gp = resol_kriging(Xtr_n, Ytr, Xtest_n, valeur_initiale_WK, bornes_wk)   # gp resert pour l optimisation
 res = evaluer(Ytest, Y_pred_gp, 'kriging')
 for s in SORTIES:
     r_2, err = res[s]
     RESULTATS.append(('kriging', s, r_2, err))
  
 # par krigegage smt
-Yp = resol_kriging_smt(Xtr_n, Ytr, Ytest, Xtest_n)
+Yp = resol_kriging_smt(Xtr_n, Ytr, Ytest, Xtest_n, theta0_smt, theta_bounds_smt)
 res = evaluer(Ytest, Yp, 'smt')
 for s in SORTIES:
     r_2, err = res[s]

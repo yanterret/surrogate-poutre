@@ -59,7 +59,7 @@ def resol_kriging(Xtr_n,Ytr,Xtest_n,valeur_initiale_WK,bornes_wk):
 #################
 # méthodes de résolutions par kriging smt
 #################
-def resol_kriging_smt(Xtr_n,Ytr,Ytest,Xtest_n,theta0_smt):
+def resol_kriging_smt(Xtr_n,Ytr,Ytest,Xtest_n,theta0_smt,theta_bounds_smt):
     '''
     entrée :
     Xtr_n,Ytr,Ytest,Xtest_n : array
@@ -68,7 +68,7 @@ def resol_kriging_smt(Xtr_n,Ytr,Ytest,Xtest_n,theta0_smt):
     Yp : array, Ytest sert uniquement à donner la forme
     '''
     Yp = np.zeros_like(Ytest)
-    for j in SORTIES:
+    for j in [0, 1]:   # 0 = delta, 1 = sigma 
         sm = KRG(print_global=False,theta0=theta0_smt,theta_bounds = theta_bounds_smt)
         sm.set_training_values(Xtr_n, np.log(Ytr[:, j]))
         sm.train()
