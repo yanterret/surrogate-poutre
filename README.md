@@ -1,6 +1,6 @@
 # création d'un surrogate
 
-Le surrogate est une technique utilisée pour approximer des simulations avec des outils qui nécessitent moins de puissance et de temps de calcul. Dans notre cas il nous permettra d'optimiser la surface d'une poutre sous contrainte ce qui aurait pris plusieurs heures sur abaqus
+Le surrogate est une technique utilisée pour approximer des simulations avec des outils qui nécessitent moins de puissance et de temps de calcul. Dans notre cas il nous permettra d'optimiser la surface d'une poutre sous contrainte ce qui aurait pris plusieurs heures sur Abaqus.
 
 Ce dépôt est organisé en deux parties :
 - La Partie 1 qui est une appropriation du modèle sur un cas maîtrisé simple : la flexion d'une
@@ -9,20 +9,20 @@ Ce dépôt est organisé en deux parties :
 
 ## Résultats clés sur les méthodes de résolutions
 
-Surrogate avec 3 entrées (b,h,L) variables 2 fixes F la force appliquée et E le module d'young pour 2 sorties (fixer E et F multiplie juste la relation de la fleche par une constante). On obtient la fleche, la contrainte max avec 30 simulations abaqus pour entrainer le modéle et 20 de test. Ce modéle sert pour optimiser la section et trouver la poutre la plus légère en respectant sans relancer Abaqus.
+Surrogate avec 3 entrées (b,h,L) variables 2 fixes F la force appliquée et E le module d'Young pour 2 sorties (fixer E et F multiplie juste la relation de la flèche par une constante). On obtient la flèche, la contrainte max avec 30 simulations Abaqus pour entraîner le modèle et 20 de test. Ce modèle sert pour optimiser la section et trouver la poutre la plus légère en respectant sans relancer Abaqus.
 
 | configuration log| $R^2$ flèche | ERM flèche | $R^2$ sigma max | ERM sigma max |
 |:---:|:---:|:---:|:---:|:---:|
 | SMT tuné | 0.979 | 3.06 % | 0.979 | 2.17 % |
 | kriging maison tuné | $\color{red}{0.955}$ |  $\color{green}{1.53}$ % | 0.983 | $\color{green}{1.82}$ % |
 
-- appliquer la fonction log aux sorties rends unanimement les modéles de kriging plus efficaces au niveau de l'ERM surtout pour des calculs de fleches. 
-- mon kriging maison atteint un $R^2$ inférieur au SMT sur la flèche mais supérieur sur la contrainte. Cependant en terme d écart réel médiane (ERM) **mon kriging maison peut donner des résulats 2 fois plus fiables que le SMT pour la fleche**. La variation sur le $R^2$ peut s expliquer part quelques points qui son trés loin du résultats attendu mais globalement (ERM) mon modéle donne des résultats plus proches de la valeur attendu.
+- appliquer la fonction log aux sorties rend unanimement les modèles de kriging plus efficaces au niveau de l'ERM surtout pour des calculs de flèches. 
+- mon kriging maison atteint un $R^2$ inférieur au SMT sur la flèche mais supérieur sur la contrainte. Cependant en terme d'écart réel médian (ERM) **mon kriging maison peut donner des résultats 2 fois plus fiables que le SMT pour la flèche**. La variation sur le $R^2$ peut s'expliquer par quelques points qui sont très loin du résultat attendu mais globalement (ERM) mon modèle donne des résultats plus proches de la valeur attendue.
 
 <p align="center">
   <img src="photos/resultat.png" width="600">
   <br>
-  <em>Figure 1 résultat de mon code par rapport à la premiere bisectrice des axes ( ce que mon code est censé faire) </em>
+  <em>Figure 1 résultat de mon code par rapport à la première bisectrice des axes ( ce que mon code est censé faire) </em>
 </p>
 
 # Partie 1 appropriation du concept
@@ -106,7 +106,7 @@ Or, on ne va pas simuler toutes les poutres du domaine de validité : on choisir
 <p align="center">
   <img src="photos/random_moi.png" width="400">
   <br>
-  <em>Figure 4Illustration de la méthode random sampling</em>
+  <em>Figure 4 Illustration de la méthode random sampling</em>
 </p>
 
 - **Le Latin Hypercube Sampling (LHS)**, que l'on retiendra, car il conserve une part d'aléatoire tout en tirant un jeu de points inhérent aux poutres, sans pour autant couvrir tout l'espace. Il y arrive en quadrillant l'espace et en y attribuant minimum 1 point.
@@ -136,7 +136,7 @@ et **X2**  : un tableau de même taille, mis à l'échelle entre les bornes inf�
 
 Ces points serviront ensuite à alimenter un fichier CSV utilisé en entrée d'Abaqus.
 
-Simulations Abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments hexaédrique C3D20R.
+Simulations Abaqus qui ont un maillage approximant les 600 éléments au minimum, une force posée avec un point de couplage distributing, et des éléments hexaédriques C3D20R.
 On remarquera que le max est bien proche du début de la poutre, ce qui vérifie la théorie des poutres.
 
 <p align="center">
@@ -199,7 +199,7 @@ Il se présente comme une régression, mais qui quantifie la variance autour de 
 <p align="center">
   <img src="photos/illukrig.png" width="400">
   <br>
-  <em>Figure 8Illustration de la méthode du krigeage</em>
+  <em>Figure 8 Illustration de la méthode du krigeage</em>
 </p>
 
 La zone grise est calculée avec le kernel que l'on définira ensuite, et chaque prédiction possède son incertitude, ce qui est pratique pour savoir sur quels points le modèle est fiable.
@@ -209,7 +209,7 @@ Le krigeage modélise la réponse comme la somme de deux termes (conventions de 
 $$\hat{y}(\mathbf{x}) = \underbrace{\sum_{i=1}^{k} \beta_i f_i(\mathbf{x})}_{\text{paramètres que l'on entraîne}} + \underbrace{Z(\mathbf{x})}_{\text{influence des points connus réglée par le noyau}}$$
 
 - le premier terme est constitué de coefficients $\beta_i$ réglés à l'entraînement ;
-- le second, $Z(\mathbf{x})$, permet aussi de relier les points à l'aide du noyau
+- le second, $Z(\mathbf{x})$, permet aussi de relier les points à l'aide du noyau.
 
 C'est le noyau qui porte à la fois la notion de proximité entre points et le niveau de bruit. J'utilise un noyau gaussien car la réponse que l'on approxime ne présente a priori pas de fortes variations. Dans ce code, chaque entrée possède son propre length-scale (le $\ell$) dit ARD, ce qui permet d'identifier les paramètres les plus influents.
 
@@ -232,7 +232,7 @@ avec
 k(x) = \begin{pmatrix} k(x, x_1') \\ k(x, x_2') \\ \vdots \\ k(x, x_n') \end{pmatrix}
 ```
 
-- un vecteur $k(x^*)$ un vecteur où on calcule la similarité entre le point que l'on traite et les autres via le kernel
+- $k(x^*)$ un vecteur où on calcule la similarité entre le point que l'on traite et les autres via le kernel
 -  $(K + \sigma^2 I)^{-1}$ la matrice inhérente au kriging avec ($\sigma^2 I$ étant le terme de bruit)
 
 *Cela s'appuie entre autres sur la ressource : [tuto kriging](https://mdobook.github.io/html/sbo/#sec-kriging)*
@@ -253,7 +253,7 @@ evaluer(Ytest, Y_pred_gp)
 et (1e-6, 1e-2) ses bornes d'optimisation
 - normalize_y=True : obligatoire pour respecter l'hypothèse du modèle qui est d'avoir une moyenne nulle, donc il faut centrer Y pour respecter ça.
 
-Voici les résultats que j'ai avec des entrées normalisées et des sorties en log. En pratique, la valeur que j'ai vraiment tunée est le bruit, qui peut faire varier l'ERM de plusieurs pourcents.
+Voici les résultats que j'ai avec des entrées normalisées et des sorties en log. En pratique, la valeur que j'ai vraiment tunée est le bruit, qui peut faire varier l'ERM de plusieurs pour cent.
 
 | sorties avec log :| $R^2$ | ERM |
 |:---:|:---:|:---:|
@@ -272,24 +272,24 @@ $$\text{MSE avec sortie log} = \frac{1}{n}\sum_{i=1}^{n}\big(\log \hat{y}_i - \l
 ## L'utilisation
 Finalement, on peut utiliser ce modèle pour optimiser la géométrie de la poutre (b, h) pour résister à la charge sur laquelle on a entraîné le modèle.
 
-On utilise `differential_evolution` de scipy car c'est un algorithme qui permet de faire le choix final en fonction des paraemtres à optimiser. Entre autres, masse la plus basse.
+On utilise `differential_evolution` de scipy car c'est un algorithme qui permet de balayer les poutres potentielles tout en les mettant dans un algorithme de score (on met 1e10 à celles que l'on ne veut pas).
 
 Finalement avec mon code j'obtiens `b = 24.7 mm, h = 100.0 mm, masse = 29.09 kg` et pour celui du smt `b = 23.2 mm, h = 100.0 mm, masse = 27.35 kg`
 
-On pourrait croire que le smt fonctionne mieux puisqu'il sort la poutre la plus légère. Enfait si on fait les calculs de RDM, on remarque que les deux poutres sortent du domaine physique, avec une flèche de 5.21 mm pour la mienne et de 5.54 mm pour celle du smt.En parrallele les 2 modèles respectent le critère sur la contrainte maximum qui n'est apparemment pas le critère limitant dans mon problème (70 MPa à l'optimum pour une limite de 200).
+On pourrait croire que le smt fonctionne mieux puisqu'il sort la poutre la plus légère. En fait si on fait les calculs de RDM, on remarque que les deux poutres sortent du domaine physique, avec une flèche de 5.21 mm pour la mienne et de 5.54 mm pour celle du smt. En parallèle les 2 modèles respectent le critère sur la contrainte maximum qui n'est apparemment pas le critère limitant dans mon problème (70 MPa à l'optimum pour une limite de 200).
 
-Ainsi j'ai décider de poser un coefficient de sécurité sur la flèche. J'ai ainsi testé plusieurs valeurs avec comme objectif de ne pas dépasser une valeur de flèche de 5 mm, qui est le critere limitant.
+Ainsi j'ai décidé de poser un coefficient de sécurité sur la flèche. J'ai ainsi testé plusieurs valeurs avec comme objectif de ne pas dépasser une valeur de flèche de 5 mm, qui est le critère limitant.
 - En prenant 95 % du critère à respecter j'obtiens : `b = 26.5 mm, h = 100.0 mm, masse = 31.19 kg flèche de 4.857 mm` qui est la meilleure option avec un pas de 5.
 
-Or j ai pu faire cette démarche car j'avais la solution analyrtique. Dans un cas plus complexe on mettrait en place la maniere suivante.
+Or j'ai pu faire cette démarche car j'avais la solution analytique. Dans un cas plus complexe on mettrait en place la manière suivante.
 
-En prenant en compte la variance que me renvoie mon modéle de krigeage je tombe sur `b = 27.2 mm, h = 100.0 mm, masse = 32.07 kg fleche de 4.722 mm`. C est moins optimisé qu'avec le coefficient à 95 %, mais cette marge n'est pas réglée à la main.
+En prenant en compte la variance que me renvoie mon modèle de krigeage je tombe sur `b = 27.2 mm, h = 100.0 mm, masse = 32.07 kg fleche de 4.722 mm`. C'est moins optimisé qu'avec le coefficient à 95 %, mais cette marge n'est pas réglée à la main.
 
 *Cela s'appuie entre autres sur la ressource : [surrogate](https://computationaldesignlab.github.io/surrogate-methods/index.html)*
 
 ## comparaison avec le smt 
 
-Il fonctionne de la meme maniere que le krigeage de scipy mais avec quelques spécificités, il se code de cette maniere:
+Il fonctionne de la même manière que le krigeage de scipy mais avec quelques spécificités, il se code de cette manière :
 
 ````python 
 smt = KRG(eval_noise=True, hyper_opt="Cobyla",theta0=[1e-2],theta_bounds = [1e-4,1e0])
@@ -298,10 +298,10 @@ smt.train()
 y = np.exp(smt.predict_values(Xtest_n) )
 ````
 
-- eval_noise=True : terme de bruit qui est analogue au white kernel, il s accompagne de l optimizer "Cobyla" pour que l algorythme converge mieux il est appelé par smt *nugget*
-- theta0=[1e-2],theta_bounds = [1e-4,1e0] : c est le noyau qui se regle avec un $\theta$ qui équivaut à l inverse de notre $\ell$ à un coefficient mutiplicatif prés
+- eval_noise=True : terme de bruit qui est analogue au white kernel, il s'accompagne de l'optimizer "Cobyla" pour que l'algorithme converge mieux, il est appelé par smt *nugget*
+- theta0=[1e-2],theta_bounds = [1e-4,1e0] : c'est le noyau qui se règle avec un $\theta$ qui équivaut à l'inverse de notre $\ell$ à un coefficient multiplicatif près
 
-Pour son utilisation soit on met le white kernel soit on tune nous meme le $\theta$ mais de mettre les 2 ensemble n est pas optimal. En sachant que si on tune le $\theta$, se sont ses bornes qui influent le plus sur le résultat.
+Pour son utilisation soit on met le white kernel soit on tune nous-mêmes le $\theta$ mais de mettre les 2 ensemble n'est pas optimal. En sachant que si on tune le $\theta$, ce sont ses bornes qui influent le plus sur le résultat.
 
 | configuration log| $R^2$ flèche | ERM flèche | $R^2$ σ max | ERM σ max |
 |:---|:---:|:---:|:---:|:---:|
@@ -313,7 +313,7 @@ Pour son utilisation soit on met le white kernel soit on tune nous meme le $\the
 | nugget | 0.9429 | 8.14 % | $\color{green}{0.9931}$ | $\color{green}{2.46}$ % |
 | theta réglé | 0.9638 | 6.53 % | 0.9712 | 5.65 % |
 
-Par cette comparaison on remarque que le tuning qui a le plus d'importance est de passer les sorties en log. En revanche le $\theta$ réglé donne ici exactement les mêmes chiffres que la configuration par défaut ( peut etre mal tune ? ). Seul le nugget déplace le résultat en améliorant l'ERM des deux sorties à defaut du $R^2$ de la flèche. Là encore c'est l'ERM qui permet de comparer principalement les tuning.
+Par cette comparaison on remarque que le tuning qui a le plus d'importance est de passer les sorties en log. En revanche le $\theta$ réglé donne ici exactement les mêmes chiffres que la configuration par défaut (peut-être mal tuné ?). Seul le nugget déplace le résultat en améliorant l'ERM des deux sorties à défaut du $R^2$ de la flèche. Là encore c'est l'ERM qui permet de comparer principalement les tunings.
 
 # Conclusion 
 

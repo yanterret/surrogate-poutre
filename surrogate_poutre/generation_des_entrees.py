@@ -11,7 +11,7 @@ import pandas as pd
 #################
 bornes_inf = np.array([1000.0, 20.0, 20.0])
 bornes_supp = np.array([2000.0, 100.0, 100.0])
-E = 210000 # MPA
+E = 210000 # MPa
 F = 2000 #  N
 
 #################
@@ -19,17 +19,17 @@ F = 2000 #  N
 #################
 def generer_doe(n, seed):
     '''
-    entrée : 
+    entrée :
     n : int : nombre de points
     seed : int : numéro de la seed
 
     sortie :
-    X : array shape(n,5) dedans des float 
+    X : array shape(n,5) dedans des float
     '''
     PE = np.hstack((np.full(n,F).reshape(-1, 1),np.full(n,E).reshape(-1, 1)))
     X_inter = np.empty((0, 3))
     nb = n
-    seed_bis = seed  # on change la seed car si dans la boucle on demande le meme nombre de points ça renverra la meme chose donc si ne marchent pas ne changerontr rien 
+    seed_bis = seed  # on change la seed car si dans la boucle on demande le même nombre de points ça renverra la même chose donc si ne marchent pas ne changeront rien
     while np.shape(X_inter)[0] < n :
         X_append =  qmc.scale(qmc.LatinHypercube(d=3, seed=seed_bis).random(nb), bornes_inf, bornes_supp)
         L, b, h = X_append[:,0], X_append[:,1],X_append[:,2]
@@ -37,16 +37,16 @@ def generer_doe(n, seed):
         delta = F * L**3 / (3 * E * I)
         sigma = F * L * (h/2) / I
         elancement = L / h
-        X_bon = X_append[(elancement >= 10)&(delta/L <= 0.05)&(sigma <= 200)] 
+        X_bon = X_append[(elancement >= 10)&(delta/L <= 0.05)&(sigma <= 200)]
         X_inter = np.vstack((X_inter , X_bon))
-        nb = max(n - np.shape(X_inter)[0],1)   # max car peut etre négatif..
+        nb = max(n - np.shape(X_inter)[0],1)   # max car peut être négatif..
         seed_bis += 2
     return np.hstack((X_inter,PE))[:n]  # shape(n,5)
 
 def exporter_doe(X, chemin):
     '''
-    entrée : 
-    X : array shape(n,5) 
+    entrée :
+    X : array shape(n,5)
     chemin : string
 
     sortie :
@@ -57,31 +57,31 @@ def exporter_doe(X, chemin):
         for i, x in enumerate(X):
             ligne = f"{i:03d}" # pour respecter le format abaqus...
             for v in x:
-                ligne += ';' + f"{v:.4f}" # de meme
+                ligne += ';' + f"{v:.4f}" # de même
             F.write(ligne + '\n')
 
-# à la fin des simulations on retransforme en array 
+# à la fin des simulations on retransforme en array
 def csv_to_array(doc):
     '''
-    entrée : 
+    entrée :
     doc : csv
 
     sortie :
-    Y : array shape(n,3) dedans des float 
-    X : array shape(n,3) dedans des float 
-    '''    
+    Y : array shape(n,2) dedans des float
+    X : array shape(n,3) dedans des float
+    '''
     df = pd.read_csv(doc, sep=';', encoding='utf-8')
     df.columns = df.columns.str.strip()
     L = df['L'].to_numpy().reshape(-1, 1)
     b = df['b'].to_numpy().reshape(-1, 1)
     h = df['h'].to_numpy().reshape(-1, 1)
-    
+
     Delta = df['Delta'].to_numpy().reshape(-1, 1)
     Sigma_max = df['Sigma_max'].to_numpy().reshape(-1, 1)
-    
+
     Y = np.hstack([Delta, Sigma_max])
-    X = np.hstack([L, b, h])  
-    
+    X = np.hstack([L, b, h])
+
     return Y,X
 
 #################
@@ -91,8 +91,8 @@ SORTIES = ['delta', 'sigma']
 
 def r2(y_vrai, y_pred):
     '''
-    entrée : 
-    y_vrai, y_pred : float ou array 
+    entrée :
+    y_vrai, y_pred : float ou array
 
     sortie :
     R2 : float
@@ -104,11 +104,11 @@ def r2(y_vrai, y_pred):
 def evaluer(Y_vrai, Y_pred, nom=''):
     '''
     entrée :
-    y_vrai, y_pred : float ou array
+    Y_vrai, Y_pred : float ou array
     nom : string : nom de la méthode testée, pour la console et le csv
- 
+
     sortie :
-    métriques : string final
+    métriques : affichage console
     res : dict {sortie : (R2, ERM)} pour écrire le csv des résultats
     '''
     res = {}
