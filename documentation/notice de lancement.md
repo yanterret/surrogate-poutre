@@ -4,8 +4,9 @@ Prérequis : Python supérieur à 3.10.
 
 ```bash
 git clone https://github.com/yanterret/surrogate-poutre.git
-cd surrogate_poutre
+cd surrogate-poutre
 pip install -r documentation/requirement.txt
+cd surrogate_poutre
 python surrogate_pipeline.py
 ```
 
