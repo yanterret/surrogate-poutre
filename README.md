@@ -13,18 +13,17 @@ surrogate avec 3 entrées (b,h,L) variables 2 fixes F et E pour 2 sorties ( fixe
 
 | configuration log| $R^2$ flèche | ERM flèche | $R^2$ sigma max | ERM sigma max |
 |:---:|:---:|:---:|:---:|:---:|
-| SMT tuné | 0.9986 | $\color{green}{1.37}$ % | 0.9974 | 2.32 % |
-| kriging maison tuné | 0.998 | 1.86 % | 0.997 | $\color{green}{2.23}$ % |
+| SMT tuné | 0.979 | 3.06 % | 0.979 | 2.17 % |
+| kriging maison tuné | $\color{red}{0.955}$ |  $\color{green}{1.53}$ % | 0.983 | $\color{green}{1.82}$ % |
 
-- appliquer la fonction log aux sorties rends unanimement les modéles de kriging plus efficaces
-- mon kriging maison atteint un $R^2$ satisfaisant et compétitif par rapport au SMT et en terme d écart réel médiane (ERM) est similaire à 0.5% prés ce qui valide mon travail 
+- appliquer la fonction log aux sorties rends unanimement les modéles de kriging plus efficaces au niveau de l'ERM surtout pour des calculs de fleches. 
+- mon kriging maison atteint un $R^2$ inférieur au SMT sur la flèche mais supérieur sur la contrainte. Cependant en terme d écart réel médiane (ERM) **mon kriging maison peut donner des résulats 2 fois plus fiables que le SMT pour la fleche**. La variation sur le $R^2$ peut s expliquer part quelques points qui son trés loin du résultats attendu mais globalement (ERM) mon modéle donne des résultats plus proches de la valeur attendu.
 
 <p align="center">
   <img src="photos/resultat.png" width="600">
   <br>
   <em>Figure 1 résultat de mon code par rapport à la premiere bisectrice des axes ( ce que mon code est censé faire) </em>
 </p>
-
 
 # Partie 1 appropriation du concept
 
@@ -185,12 +184,12 @@ Pour ce qui est de l'ERM, je n'ai trouvé nulle part d'utilisation de cette mét
 
 | degré | 1 | *2* | 3 | 4 | 5 | 6 | 1 en entrée log |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| $R^2$ flèche | $\color{red}{0.73}$ | 0.93 | $\color{red}{0.55}$ | 0.87 | $\color{red}{0.78}$ | $\color{red}{0.13}$ | $\color{green}{0.99}$ |
-| ERM flèche | $\color{red}{41.6}$ % | $\color{red}{24.0}$ % | $\color{red}{27.3}$ % | $\color{red}{29.7}$ % | $\color{red}{36.4}$ % | $\color{red}{94.4}$ % | $\color{green}{0.17}$ % |
-| $R^2$ sigma max | 0.84 | 0.95 | 0.89 | 0.82 | $\color{red}{0.63}$ | $\color{red}{0.09}$ | $\color{green}{0.99}$ |
-| ERM sigma max | $\color{red}{21.0}$ % | 11.2 % | 5.1 % | 18.2 % | $\color{red}{21.9}$ % | $\color{red}{36.2}$ % | $\color{green}{0.62}$ % |
+| $R^2$ flèche | $\color{red}{0.696}$ | 0.927 | 0.971 | 0.931 | 0.944 | $\color{red}{0.718}$ | $\color{green}{0.998}$ |
+| ERM flèche | $\color{red}{77.6}$ % | 13.7 % | 14.7 % | 9.4 % | 8.2 % | 14.3 % | $\color{green}{1.29}$ % |
+| $R^2$ sigma max | 0.808 | 0.946 | 0.977 | $\color{green}{0.988}$ | 0.974 | 0.815 | $\color{green}{0.9997}$ |
+| ERM sigma max | $\color{red}{23.3}$ % | 8.7 % | 5.4 % | $\color{green}{2.6}$ % | 5.6 % | 10.7 % | $\color{green}{0.69}$ % |
 
-On remarque que l'ERM est utile, par exemple pour la flèche de l'ordre 2 qui est passable avec un R² de 0.93 mais une ERM désastreuse, ce qui signifie qu'en pratique ce modèle n'est pas fiable dans tout le domaine.
+On remarque que l'ERM est utile, par exemple pour la flèche de l'ordre 3 qui est passable avec un $R^2$ de 0.971 mais une ERM désastreuse à 14.7 %, ce qui signifie qu'en pratique ce modèle n'est pas fiable dans tout le domaine.
 Par ailleurs, on observe un surapprentissage à l'ordre 6 avec les métriques qui ne sont pas satisfaisantes.
 Finalement, la sortie en log produit des résultats qui seraient réellement utilisables pour un surrogate (la raison est dans l'explication plus haut), donc à tester si on connaît la relation de départ et qu'elle est multiplicative.
 
@@ -258,11 +257,11 @@ Voici les résultats que j'ai avec des entrées normalisées et des sorties en l
 
 | sorties avec log :| $R^2$ | ERM |
 |:---:|:---:|:---:|
-| flèche | $\color{green}{0.998}$ | $\color{green}{1.86}$ % |
-| sigma max | $\color{green}{0.997}$ | $\color{green}{2.23}$ % |
+| flèche | 0.955 | $\color{green}{1.53}$ % |
+| sigma max | $\color{green}{0.983}$ | $\color{green}{1.82}$ % |
 | **sorties sans log :**| $R^2$ | ERM |
-| flèche | 0.946 | $\color{red}{16.4}$ % |
-| sigma max | 0.964 | $\color{red}{9.2}$ % |
+| flèche | 0.921 | 8.33 % |
+| sigma max | $\color{green}{0.982}$ | $\color{green}{2.51}$ % |
 
 Ainsi, on observe que le gain n'est pas tant sur le $R^2$ mais sur l'ERM, qui devient satisfaisante par rapport à des données qui n'ont pas subi le log. Cela peut s'expliquer par le fait que le log comprime les ordres de grandeur (par exemple l'utilisation du log pour les diagrammes de Bode) et car cela permet d'adimensionner l'erreur qui est une MSE et donc de prendre en compte toutes les erreurs malgré les tailles de poutres. Par exemple, pour une poutre de vraie flèche de 1 mm, se tromper de 2 mm n'a pas le même impact qu'une poutre de flèche réelle 60 qui se trompe de la même valeur. Plus explicitement :
 
@@ -275,18 +274,16 @@ Finalement, on peut utiliser ce modèle pour optimiser la géométrie de la pout
 
 On utilise `differential_evolution` de scipy car c'est un algorithme de score pour savoir quelle poutre tester et a le meilleur score. Entre autres, masse la plus basse.
 
-Finalement avec mon code j'obtiens `b = 23.8 mm, h = 100.0 mm, masse = 28.00 kg` et pour celui du smt `b = 26.1 mm, h = 100.0 mm, masse = 30.73 kg`
+Finalement avec mon code j'obtiens `b = 24.7 mm, h = 100.0 mm, masse = 29.09 kg` et pour celui du smt `b = 23.2 mm, h = 100.0 mm, masse = 27.35 kg`
 
-On pourrait croire que le mien fonctionne mieux, mais non car si on fait les calculs de RDM ma poutre sort du domaine physique avec un delta de 5.40 mm. Tandis que le smt surdimensionne avec une flèche de 4.93 mm (les 2 modèles respectent le critère sur la contrainte maximum qui n'est apparemment pas le critère limitant dans mon problème).
+On pourrait croire que le smt fonctionne mieux puisqu'il sort la poutre la plus légère. Enfait si on fait les calculs de RDM, on remarque que les deux poutres sortent du domaine physique, avec une flèche de 5.21 mm pour la mienne et de 5.54 mm pour celle du smt.En parrallele les 2 modèles respectent le critère sur la contrainte maximum qui n'est apparemment pas le critère limitant dans mon problème (70 MPa à l'optimum pour une limite de 200).
 
-Ainsi il faut faire attention et prendre un coefficient de sécurité sur la flèche.
-- En prenant 90 % du critère à respecter j'obtiens : `27.5 mm, h = 100.0 mm, masse = 32.36 kg flèche de 4.675 mm` ce qui est maintenant bon
-- et 95 % : `b = 25.6 mm, h = 100.0 mm, masse = 30.18 kg flèche de 5.0223 mm` pas acceptable de très peu
+Ainsi j'ai décider de poser un coefficient de sécurité sur la flèche. J'ai ainsi testé plusieurs valeurs avec comme objectif de ne pas dépasser une valeur de flèche de 5 mm, qui est le critere limitant.
+- En prenant 95 % du critère à respecter j'obtiens : `b = 26.5 mm, h = 100.0 mm, masse = 31.19 kg flèche de 4.857 mm` qui est apres un tuning de 5 par 5 % la meilleure option
 
-Cette erreur est sûrement due au fait que mon modèle ne prédit pas exactement le modèle qui respecte toutes les conditions physiques ($R^2$ pas égal à 1) et que le smt doit avoir une erreur plus basse pour cette valeur qui la surdimensionne.
+Or j ai pu faire cette démarche car j'avais la solution analyrtique. Dans un cas plus complexe on mettrait en place la maniere suivante.
 
-Ainsi en prenant en compte la variance que me renvoie mon modéle de krigeage je tombe sur `	b = 25.9 mm, h = 99.9 mm, masse = 30.46 kg fleche de 4.979 mm` ce qui est en dessous de la fleche de 5 mm, le surdimensionnement marche ! 
-
+En prenant en compte la variance que me renvoie mon modéle de krigeage je tombe sur `b = 27.2 mm, h = 100.0 mm, masse = 32.07 kg fleche de 4.722 mm`. C est moins optimisé qu'avec le coefficient à 95 %, mais cette marge n'est pas réglée à la main.
 
 *Cela s'appuie entre autres sur la ressource : [surrogate](https://computationaldesignlab.github.io/surrogate-methods/index.html)*
 
@@ -308,15 +305,15 @@ Pour son utilisation soit on met le white kernel soit on tune nous meme le $\the
 
 | configuration log| $R^2$ flèche | ERM flèche | $R^2$ σ max | ERM σ max |
 |:---|:---:|:---:|:---:|:---:|
-| configuration sans rien | $\color{green}{0.9987}$ | $\color{green}{1.68}$ % | $\color{green}{0.9970}$ | $\color{green}{2.13}$ % |
-| nugget | $\color{green}{0.9986}$ | $\color{green}{1.37}$ % | $\color{green}{0.9974}$ | $\color{green}{2.32}$ % |
-| theta réglé | $\color{green}{0.9986}$ | $\color{green}{1.37}$ % | $\color{green}{0.9967}$ | $\color{green}{2.37}$ % |
+| configuration sans rien | 0.9785 | $\color{green}{3.06}$ % | 0.9787 | $\color{green}{2.17}$ % |
+| nugget | 0.9500 | $\color{green}{1.75}$ % | $\color{green}{0.9856}$ | $\color{green}{1.58}$ % |
+| theta réglé | 0.9785 | $\color{green}{3.06}$ % | 0.9787 | $\color{green}{2.17}$ % |
 | **configuration non log** | **$R^2$ flèche** | **ERM flèche** | **$R^2$ sigma max** | **ERM sigma max** |
-| configuration sans rien| 0.9533 | $\color{red}{15.77}$ % | 0.9777 | $\color{red}{8.06}$ % |
-| nugget | 0.9533 | $\color{red}{15.77}$ % | 0.9777 | $\color{red}{8.06}$ % |
-| theta réglé | 0.9455 | $\color{red}{17.90}$ % | 0.9686 | $\color{red}{8.56}$ % |
+| configuration sans rien| 0.9638 | 6.53 % | 0.9712 | 5.65 % |
+| nugget | 0.9429 | 8.14 % | $\color{green}{0.9931}$ | $\color{green}{2.46}$ % |
+| theta réglé | 0.9638 | 6.53 % | 0.9712 | 5.65 % |
 
-Par cette comparaison on remarque que le tuning qui a le plus d importance est de passer les sorties en log et que un bon $\theta$ réglé équivaut au nugget. On remarquera que l ERM est cohérent car il est la seule métrique avec laquelle on peut comparer les tuning car les $R^2$ sont tous au niveau.
+Par cette comparaison on remarque que le tuning qui a le plus d'importance est de passer les sorties en log. En revanche le $\theta$ réglé donne ici exactement les mêmes chiffres que la configuration par défaut. Seul le nugget déplace le résultat en améliorant l'ERM des deux sorties (1.75 % et 1.58 %) à defaut du $R^2$ de la flèche. Là encore c'est l'ERM qui permet de comparer principalement les tuning.
 
 ## construction du code
 
