@@ -272,14 +272,14 @@ $$\text{MSE avec sortie log} = \frac{1}{n}\sum_{i=1}^{n}\big(\log \hat{y}_i - \l
 ## L'utilisation
 Finalement, on peut utiliser ce modèle pour optimiser la géométrie de la poutre (b, h) pour résister à la charge sur laquelle on a entraîné le modèle.
 
-On utilise `differential_evolution` de scipy car c'est un algorithme de score pour savoir quelle poutre tester et a le meilleur score. Entre autres, masse la plus basse.
+On utilise `differential_evolution` de scipy car c'est un algorithme qui permet de faire le choix final en fonction des paraemtres à optimiser. Entre autres, masse la plus basse.
 
 Finalement avec mon code j'obtiens `b = 24.7 mm, h = 100.0 mm, masse = 29.09 kg` et pour celui du smt `b = 23.2 mm, h = 100.0 mm, masse = 27.35 kg`
 
 On pourrait croire que le smt fonctionne mieux puisqu'il sort la poutre la plus légère. Enfait si on fait les calculs de RDM, on remarque que les deux poutres sortent du domaine physique, avec une flèche de 5.21 mm pour la mienne et de 5.54 mm pour celle du smt.En parrallele les 2 modèles respectent le critère sur la contrainte maximum qui n'est apparemment pas le critère limitant dans mon problème (70 MPa à l'optimum pour une limite de 200).
 
 Ainsi j'ai décider de poser un coefficient de sécurité sur la flèche. J'ai ainsi testé plusieurs valeurs avec comme objectif de ne pas dépasser une valeur de flèche de 5 mm, qui est le critere limitant.
-- En prenant 95 % du critère à respecter j'obtiens : `b = 26.5 mm, h = 100.0 mm, masse = 31.19 kg flèche de 4.857 mm` qui est apres un tuning de 5 par 5 % la meilleure option
+- En prenant 95 % du critère à respecter j'obtiens : `b = 26.5 mm, h = 100.0 mm, masse = 31.19 kg flèche de 4.857 mm` qui est la meilleure option avec un pas de 5.
 
 Or j ai pu faire cette démarche car j'avais la solution analyrtique. Dans un cas plus complexe on mettrait en place la maniere suivante.
 
