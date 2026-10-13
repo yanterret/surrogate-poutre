@@ -4,12 +4,12 @@ Le surrogate est une technique utilisée pour approximer des simulations avec de
 
 Ce dépôt est organisé en deux parties :
 - La Partie 1 qui est une appropriation du modèle sur un cas maîtrisé simple : la flexion d'une
-  poutre encastrée-libre, dans le cadre des petites perturbations.
+  poutre en acier encastrée-libre, dans le cadre des petites perturbations.
 - La Partie 2 qui est la comparaison de notre méthode de résolution avec un surrogate de référence, le SMT ([lien](https://smt.readthedocs.io/en/latest/)).
 
 ## Résultats clés sur les méthodes de résolutions
 
-surrogate avec 3 entrées (b,h,L) variables 2 fixes F et E pour 2 sorties ( fixer E et F multiplie juste la relation de la fleche par une constante.): la fleche, la contrainte max avec 30 simulations abaqus pour entrainer le modéle et 20 de test. Ce modéle sert pour optimiser la section et trouver la poutre la plus légère en respectant sans relancer Abaqus.
+Surrogate avec 3 entrées (b,h,L) variables 2 fixes F la force appliquée et E le module d'young pour 2 sorties (fixer E et F multiplie juste la relation de la fleche par une constante). On obtient la fleche, la contrainte max avec 30 simulations abaqus pour entrainer le modéle et 20 de test. Ce modéle sert pour optimiser la section et trouver la poutre la plus légère en respectant sans relancer Abaqus.
 
 | configuration log| $R^2$ flèche | ERM flèche | $R^2$ sigma max | ERM sigma max |
 |:---:|:---:|:---:|:---:|:---:|
@@ -313,15 +313,7 @@ Pour son utilisation soit on met le white kernel soit on tune nous meme le $\the
 | nugget | 0.9429 | 8.14 % | $\color{green}{0.9931}$ | $\color{green}{2.46}$ % |
 | theta réglé | 0.9638 | 6.53 % | 0.9712 | 5.65 % |
 
-Par cette comparaison on remarque que le tuning qui a le plus d'importance est de passer les sorties en log. En revanche le $\theta$ réglé donne ici exactement les mêmes chiffres que la configuration par défaut. Seul le nugget déplace le résultat en améliorant l'ERM des deux sorties (1.75 % et 1.58 %) à defaut du $R^2$ de la flèche. Là encore c'est l'ERM qui permet de comparer principalement les tuning.
-
-## construction du code
-
-Pour plus de lisibilité, j'ai découpé le code en plusieurs sections :
-
-- génération des données d'entrée
-- choix de la méthode de résolution
-- test du modèle
+Par cette comparaison on remarque que le tuning qui a le plus d'importance est de passer les sorties en log. En revanche le $\theta$ réglé donne ici exactement les mêmes chiffres que la configuration par défaut ( peut etre mal tune ? ). Seul le nugget déplace le résultat en améliorant l'ERM des deux sorties à defaut du $R^2$ de la flèche. Là encore c'est l'ERM qui permet de comparer principalement les tuning.
 
 # Conclusion 
 
