@@ -110,6 +110,9 @@ print(f'smt sans marge, b = {b:.1f} mm, h = {h:.1f} mm, masse = {masse:.2f} kg, 
 #################
 # ecriture des resultats en csv
 #################
+for i in RESULTATS:
+    print(i)
+
 os.makedirs("resultats", exist_ok=True)
 with open("resultats/florileche_resultat.csv", mode='w', encoding='utf8') as fichier:
     fichier.write('methode;sortie;R2;ERM\n')
