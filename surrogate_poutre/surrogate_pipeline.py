@@ -15,21 +15,28 @@ from surrogate_methodes import surrogate_kriging, surrogate_kriging_variance, en
 #################
 # paramétres de la simulation
 #################
-# dans methodes_resolutions
+# paramétres données et probleme
 SORTIES = ['delta', 'sigma']
 L0 = 1500.0 
 RESULTATS = []   # (methode, sortie, R2, ERM)
-
-# dans generation_des_entrees
 bornes_inf = np.array([1000.0, 20.0, 20.0])
 bornes_supp = np.array([2000.0, 100.0, 100.0])
 E = 210000 # MPA
 F = 2000 #  N
-# dans surrogate_methodes
 delta_max = 5.0      # mm donné par la rdm
 sigma_max= 200.0    # MPa donné par la rdm
 l0 = 1500.0          # mm entre 1000 et 2000 ok
 borne_opti_b , borne_opti_h = (bornes_inf[1],bornes_supp[1]) , (bornes_inf[2],bornes_supp[2])
+
+# parametre polynomes
+deg_poly = [ i for i in range(1,7)]
+
+#tuning kriging
+valeur_initiale_WK = 1e-4
+bornes_wk = (1e-6, 1e-2)
+
+theta0_smt= [1e-2]
+theta_bounds_smt = [1e-4,1e0]
 
 #################
 # generation des données d'entrees
@@ -49,24 +56,32 @@ Xtr_n, Xtest_n = sx.transform(Xtr), sx.transform(Xtest) # création d un set nor
 # méthodes de résolutions
 #################
 # par polynomes et log polynomes
-resu_poly_deg, Y_pred_log = resol_polynomes(Xtr, Ytr, Xtest, Xtr_n, Xtest_n)
+resu_poly_deg, Y_pred_log = resol_polynomes(Xtr, Ytr, Xtest, Xtr_n, Xtest_n,deg_poly)
 
-for deg, Ypred_poly in enumerate(resu_poly_deg, start=1):   # start=1 : la liste commence au degré 1
-    res = evaluer(Ytest, Ypred_poly, f'poly{deg}')
-    RESULTATS += [(f'poly{deg}', s, *res[s]) for s in SORTIES]
+for deg in deg_poly:
+    res = evaluer(Ytest, resu_poly_deg[deg-1], f'poly{deg}')
+    for s in SORTIES:
+        r_2, err = res[s]               # on sort les deux métriques du tuple
+        RESULTATS.append((f'poly{deg}', s, r_2, err))
 
 res = evaluer(Ytest, Y_pred_log, 'poly_log')
-RESULTATS += [('poly_log', s, *res[s]) for s in SORTIES]
+for s in SORTIES:
+    r_2, err = res[s]
+    RESULTATS.append(('poly_log', s, r_2, err))
 
 # par krigegage
 Y_pred_gp, gp = resol_kriging(Xtr_n, Ytr, Xtest_n)   # gp resert pour l optimisation
 res = evaluer(Ytest, Y_pred_gp, 'kriging')
-RESULTATS += [('kriging', s, *res[s]) for s in SORTIES]
-
+for s in SORTIES:
+    r_2, err = res[s]
+    RESULTATS.append(('kriging', s, r_2, err))
+ 
 # par krigegage smt
 Yp = resol_kriging_smt(Xtr_n, Ytr, Ytest, Xtest_n)
 res = evaluer(Ytest, Yp, 'smt')
-RESULTATS += [('smt', s, *res[s]) for s in SORTIES]
+for s in SORTIES:
+    r_2, err = res[s]
+    RESULTATS.append(('smt', s, r_2, err))
 
 #################
 # utilisation : optimisation de la section

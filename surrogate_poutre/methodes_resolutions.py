@@ -15,32 +15,31 @@ SORTIES = ['delta', 'sigma']
 #################
 # méthodes de résolutions par polynomes et log polynomes
 #################
-def resol_polynomes(Xtr,Ytr,Xtest,Xtr_n,Xtest_n):
+def resol_polynomes(Xtr,Ytr,Xtest,Xtr_n,Xtest_n,deg_poly):
     '''
     entrée :
     Xtr,Ytr,Xtest,Xtr_n,Xtest_n : array
-    Xtr et Xtest bruts : le log a besoin des vraies valeurs, les normalisées sont négatives
  
     sortie :
-    resu_poly_deg : liste des 6 predictions, un array par degré
+    resu_poly_deg : liste : un array par degré
     Y_pred_log : array
     '''
     resu_poly_deg =[]
-    for deg in [1, 2, 3, 4,5,6]:
+    for deg in deg_poly:
         poly = make_pipeline(PolynomialFeatures(deg), LinearRegression())
         poly.fit(Xtr_n, Ytr)
         Ypred_poly = poly.predict(Xtest_n)
-        resu_poly_deg.append(Ypred_poly,deg) # (2,)
+        resu_poly_deg.append(Ypred_poly) # un array (20,2) par degré
     poly_log = make_pipeline(PolynomialFeatures(1), LinearRegression())
     poly_log.fit(np.log(Xtr), np.log(Ytr))
-    Y_pred_log = np.exp(poly_log.predict(np.log(Xtest))) # ()
+    Y_pred_log = np.exp(poly_log.predict(np.log(Xtest))) # array (20, 2)
  
     return resu_poly_deg,Y_pred_log
  
 #################
 # méthodes de résolutions par kriging
 #################
-def resol_kriging(Xtr_n,Ytr,Xtest_n):
+def resol_kriging(Xtr_n,Ytr,Xtest_n,valeur_initiale_WK,bornes_wk):
     '''
     entrée :
     Xtr_n,Ytr,Xtest_n : array
@@ -49,7 +48,7 @@ def resol_kriging(Xtr_n,Ytr,Xtest_n):
     Y_pred_gp : array
     gp : modèle entrainé
     '''
-    kernel = C(1) * RBF(length_scale=np.ones(3)) + WhiteKernel(1e-4, (1e-6, 1e-2))
+    kernel = C(1) * RBF(length_scale=np.ones(3)) + WhiteKernel(valeur_initiale_WK, bornes_wk)
     gp = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
     gp.fit(Xtr_n, np.log(Ytr))
  
@@ -60,7 +59,7 @@ def resol_kriging(Xtr_n,Ytr,Xtest_n):
 #################
 # méthodes de résolutions par kriging smt
 #################
-def resol_kriging_smt(Xtr_n,Ytr,Ytest,Xtest_n):
+def resol_kriging_smt(Xtr_n,Ytr,Ytest,Xtest_n,theta0_smt):
     '''
     entrée :
     Xtr_n,Ytr,Ytest,Xtest_n : array
@@ -70,7 +69,7 @@ def resol_kriging_smt(Xtr_n,Ytr,Ytest,Xtest_n):
     '''
     Yp = np.zeros_like(Ytest)
     for j in SORTIES:
-        sm = KRG(print_global=False,theta0=[1e-2],theta_bounds = [1e-4,1e0])
+        sm = KRG(print_global=False,theta0=theta0_smt,theta_bounds = theta_bounds_smt)
         sm.set_training_values(Xtr_n, np.log(Ytr[:, j]))
         sm.train()
         y =np.exp( sm.predict_values(Xtest_n)) # array (20, 1)
