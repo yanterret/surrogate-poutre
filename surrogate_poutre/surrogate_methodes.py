@@ -30,7 +30,7 @@ def surrogate_kriging(y, gp, sx,DELTA_MAX=delta_max,SIGMA_MAX = sigma_max,L0 = l
     if d <= DELTA_MAX *0.95 and s <= SIGMA_MAX:
         return RHO * b * h * L0      # poutre valide
     return 1e10 # on mets une valeure absudément haute pour que l optimizer la considére comme mauvaise
- 
+
 #################
 # en utilisant la variance donnée par le krigiage 
 #################

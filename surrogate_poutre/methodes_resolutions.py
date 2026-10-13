@@ -8,7 +8,6 @@ from smt.surrogate_models import KRG
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
 import numpy as np
- 
 
 SORTIES = ['delta', 'sigma']
 

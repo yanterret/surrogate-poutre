@@ -13,6 +13,7 @@ bornes_inf = np.array([1000.0, 20.0, 20.0])
 bornes_supp = np.array([2000.0, 100.0, 100.0])
 E = 210000 # MPA
 F = 2000 #  N
+
 #################
 # génération des points de simulations
 #################
