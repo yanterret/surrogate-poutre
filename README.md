@@ -334,8 +334,4 @@ Mes points d'amélioration sont, pour un projet surrogate :
 
 * de passer sur un problème non linéaire, c'est-à-dire me concentrer sur la résolution du problème plutôt que de l'outil
 * réussir à automatiser mes runs Abaqus sous licence VMware protégée qui rend la chose complexe
-<<<<<<< HEAD
 * tester d'autres outils comme le Multi-Fidelity Neural Networks. Car je me suis rendu compte que j'étais beaucoup plus à l'aise sur ces outils (notamment grâce à la connaissance des RNN ou PINN qui m'ont donné les concepts nécessaires pour appréhender plus facilement ces problèmes)
-=======
-* tester d'autres outils comme le Multi-Fidelity Neural Networks. Car je me suis rendu compte que j'étais beaucoup plus à l'aise sur ces outils (notamment grâce à la connaissance des CNN ou PINN qui m'ont donné les concepts nécessaires pour appréhender plus facilement ces problèmes)
->>>>>>> 6c59713 (push?)

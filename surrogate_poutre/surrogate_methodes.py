@@ -90,16 +90,16 @@ def surrogate_kriging_smt(y, gp_delta, gp_sigma, sx,DELTA_MAX=delta_max,SIGMA_MA
 #################
 # code pour vérifier avec la rdm 
 #################
-def rdm(L, b, h, P, E,RHO = rho):
+def rdm(L, b, h, F, E,RHO = rho):
     '''
     entrée :
-    L, b, h, P, E ,RHO: float
+    L, b, h, F, E, RHO: float
 
     sortie :
     delta, sigma, masse : float :  en mm,  en MPa, en kg
     '''
     I =b * h**3 / 12.0
-    delta = P*L**3 /(3*E*I)
-    sigma = P * L * (h / 2.0) / I
+    delta = F*L**3 /(3*E*I)
+    sigma = F * L * (h / 2.0) / I
     masse = RHO * b * h * L
     return delta, sigma, masse

@@ -11,7 +11,8 @@ import pandas as pd
 #################
 bornes_inf = np.array([1000.0, 20.0, 20.0])
 bornes_supp = np.array([2000.0, 100.0, 100.0])
-
+E = 210000 # MPA
+F = 2000 #  N
 #################
 # génération des points de simulations
 #################
@@ -24,18 +25,16 @@ def generer_doe(n, seed):
     sortie :
     X : array shape(n,5) dedans des float 
     '''
-    PE = np.hstack((np.full(n,2000).reshape(-1, 1),np.full(n,210000).reshape(-1, 1)))
+    PE = np.hstack((np.full(n,F).reshape(-1, 1),np.full(n,E).reshape(-1, 1)))
     X_inter = np.empty((0, 3))
     nb = n
     seed_bis = seed  # on change la seed car si dans la boucle on demande le meme nombre de points ça renverra la meme chose donc si ne marchent pas ne changerontr rien 
     while np.shape(X_inter)[0] < n :
         X_append =  qmc.scale(qmc.LatinHypercube(d=3, seed=seed_bis).random(nb), bornes_inf, bornes_supp)
         L, b, h = X_append[:,0], X_append[:,1],X_append[:,2]
-        P = 2000
-        E = 210000
         I = b * h**3 / 12
-        delta = P * L**3 / (3 * E * I)
-        sigma = P * L * (h/2) / I
+        delta = F * L**3 / (3 * E * I)
+        sigma = F * L * (h/2) / I
         elancement = L / h
         X_bon = X_append[(elancement >= 10)&(delta/L <= 0.05)&(sigma <= 200)] 
         X_inter = np.vstack((X_inter , X_bon))
